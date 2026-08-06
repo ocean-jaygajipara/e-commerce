@@ -1,0 +1,284 @@
+// Premium E-Commerce Theme Interactive Logic (Vanilla JS)
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme Toggle Initialization
+    const themeBtn = document.querySelector('.theme-toggle');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(themeBtn, savedTheme);
+
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(themeBtn, newTheme);
+        });
+    }
+
+    function updateThemeIcon(btn, theme) {
+        if (!btn) return;
+        if (theme === 'dark') {
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+        } else {
+            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+        }
+    }
+
+    // Sticky Header Scroll Event
+    const header = document.querySelector('header');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    });
+
+    // Scroll to Top Button
+    const scrollTopBtn = document.querySelector('.scroll-to-top');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollTopBtn.classList.add('active');
+        } else {
+            scrollTopBtn.classList.remove('active');
+        }
+    });
+
+    if (scrollTopBtn) {
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // Live Search Suggestions Mockup
+    const searchInput = document.querySelector('.search-bar');
+    const suggestions = document.querySelector('.search-suggestions');
+    if (searchInput && suggestions) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (query.length > 1) {
+                // Populate fake matching items
+                suggestions.classList.add('active');
+            } else {
+                suggestions.classList.remove('active');
+            }
+        });
+
+        // Hide suggestions on clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+                suggestions.classList.remove('active');
+            }
+        });
+    }
+
+    // Cart Drawer Toggle Logic
+    const cartToggle = document.querySelectorAll('.cart-toggle-trigger');
+    const cartDrawer = document.querySelector('.cart-drawer');
+    const overlay = document.querySelector('.cart-drawer-overlay');
+    const closeCart = document.querySelector('.close-drawer');
+
+    function openCartDrawer() {
+        if (cartDrawer) cartDrawer.classList.add('active');
+        if (overlay) overlay.classList.add('active');
+    }
+
+    function closeCartDrawer() {
+        if (cartDrawer) cartDrawer.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+    }
+
+    cartToggle.forEach(btn => btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openCartDrawer();
+    }));
+
+    if (closeCart) closeCart.addEventListener('click', closeCartDrawer);
+    if (overlay) overlay.addEventListener('click', closeCartDrawer);
+
+    // Wishlist Mock Store
+    let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+    const wishlistBadges = document.querySelectorAll('.wishlist-badge');
+
+    function updateWishlistBadge() {
+        wishlistBadges.forEach(badge => {
+            badge.innerText = wishlist.length;
+            badge.style.display = wishlist.length > 0 ? 'flex' : 'none';
+        });
+    }
+    updateWishlistBadge();
+
+    window.toggleWishlist = function(id, name, price, img) {
+        const index = wishlist.findIndex(item => item.id === id);
+        if (index === -1) {
+            wishlist.push({ id, name, price, img });
+            showToast(`${name} added to Wishlist`);
+        } else {
+            wishlist.splice(index, 1);
+            showToast(`${name} removed from Wishlist`);
+        }
+        localStorage.setItem('wishlist', JSON.stringify(wishlist));
+        updateWishlistBadge();
+        // Trigger page re-render if we are on wishlist sections
+        if (window.renderWishlistPage) window.renderWishlistPage();
+    };
+
+    // Cart Mock Store
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const cartBadges = document.querySelectorAll('.cart-badge');
+
+    function updateCartBadge() {
+        const totalItems = cart.reduce((total, item) => total + item.qty, 0);
+        cartBadges.forEach(badge => {
+            badge.innerText = totalItems;
+            badge.style.display = totalItems > 0 ? 'flex' : 'none';
+        });
+    }
+    updateCartBadge();
+
+    window.addToCart = function(id, name, price, img, qty = 1) {
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+            existingItem.qty += qty;
+        } else {
+            cart.push({ id, name, price, img, qty });
+        }
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartBadge();
+        renderCartDrawer();
+        openCartDrawer();
+        showToast(`${name} added to Cart`);
+        if (window.renderCartPage) window.renderCartPage();
+    };
+
+    window.updateQty = function(id, delta) {
+        const item = cart.find(item => item.id === id);
+        if (item) {
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartBadge();
+            renderCartDrawer();
+            if (window.renderCartPage) window.renderCartPage();
+        }
+    };
+
+    window.removeFromCart = function(id) {
+        cart = cart.filter(i => i.id !== id);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartBadge();
+        renderCartDrawer();
+        showToast("Item removed from Cart");
+        if (window.renderCartPage) window.renderCartPage();
+    };
+
+    function renderCartDrawer() {
+        const drawerList = document.querySelector('.cart-drawer-list');
+        const drawerSubtotal = document.getElementById('drawer-subtotal');
+        if (!drawerList) return;
+
+        if (cart.length === 0) {
+            drawerList.innerHTML = `
+                <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.5;"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                    <p>Your cart is empty.</p>
+                </div>
+            `;
+            if (drawerSubtotal) drawerSubtotal.innerText = '₹0.00';
+            return;
+        }
+
+        let total = 0;
+        drawerList.innerHTML = cart.map(item => {
+            const sub = item.price * item.qty;
+            total += sub;
+            return `
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <img src="${item.img}" style="width: 70px; height: 70px; border-radius: var(--radius-sm); object-fit: cover;">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem;">${item.name}</h4>
+                        <p style="color: var(--primary); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem;">₹${item.price.toFixed(2)}</p>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button onclick="updateQty(${item.id}, -1)" style="border: 1px solid var(--border-color); background: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; color: var(--text-primary);">-</button>
+                            <span style="font-size: 0.9rem; font-weight: 600;">${item.qty}</span>
+                            <button onclick="updateQty(${item.id}, 1)" style="border: 1px solid var(--border-color); background: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; color: var(--text-primary);">+</button>
+                        </div>
+                    </div>
+                    <button onclick="removeFromCart(${item.id})" style="border: none; background: none; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        if (drawerSubtotal) drawerSubtotal.innerText = `₹${total.toFixed(2)}`;
+    }
+    renderCartDrawer();
+
+    // Flash Sale Countdown Logic
+    const timerElement = document.querySelector('.countdown-box');
+    if (timerElement) {
+        let hrs = 8, mins = 45, secs = 30;
+        setInterval(() => {
+            secs--;
+            if (secs < 0) {
+                secs = 59;
+                mins--;
+                if (mins < 0) {
+                    mins = 59;
+                    hrs--;
+                }
+            }
+            const hrsText = document.getElementById('hours');
+            const minsText = document.getElementById('minutes');
+            const secsText = document.getElementById('seconds');
+            if (hrsText) hrsText.innerText = String(hrs).padStart(2, '0');
+            if (minsText) minsText.innerText = String(mins).padStart(2, '0');
+            if (secsText) secsText.innerText = String(secs).padStart(2, '0');
+        }, 1000);
+    }
+
+    // Toast Notifier
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: var(--dark-grey);
+            color: var(--white);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-premium);
+            z-index: 9999;
+            font-weight: 500;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid var(--border-color);
+        `;
+        toast.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            ${message}
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.transform = 'translateY(0)';
+            toast.style.opacity = '1';
+        }, 50);
+
+        setTimeout(() => {
+            toast.style.transform = 'translateY(100px)';
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+    }
+});
