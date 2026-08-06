@@ -53,9 +53,23 @@ class OrderController extends Controller
             'order_number' => ['required', 'string'],
         ]);
 
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please login to track your order.'
+            ], 401);
+        }
+
         $order = Order::where('order_number', $request->order_number)->first();
 
         if ($order) {
+            if ($order->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access. You can only track your own orders.'
+                ], 403);
+            }
+
             return response()->json([
                 'success' => true,
                 'status' => $order->status,
@@ -69,5 +83,33 @@ class OrderController extends Controller
             'success' => false,
             'message' => 'Consignment not found in database.'
         ], 404);
+    }
+
+    public function returnOrder(Request $request, $id)
+    {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Please login to return an order.'], 401);
+        }
+
+        $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+            'comment' => ['nullable', 'string'],
+        ]);
+
+        $order = Order::where('id', $id)->where('user_id', \Illuminate\Support\Facades\Auth::id())->firstOrFail();
+
+        if ($order->status !== 'Delivered') {
+            return response()->json(['success' => false, 'message' => 'Only delivered orders can be returned.'], 400);
+        }
+
+        $order->status = 'Returned';
+        $order->return_reason = $request->reason;
+        $order->return_comment = $request->comment;
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order returned successfully!'
+        ]);
     }
 }

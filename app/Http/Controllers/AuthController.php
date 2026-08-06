@@ -47,9 +47,9 @@ class AuthController extends Controller
         ]);
 
         // Send OTP email (written to storage/logs/laravel.log)
-        Mail::raw("Your VELOX VIP registration verification code is: {$otp}\n\nPlease enter this code on the verification page to complete your registration.", function ($message) use ($request) {
+        Mail::raw("Your Ocean Ecom VIP registration verification code is: {$otp}\n\nPlease enter this code on the verification page to complete your registration.", function ($message) use ($request) {
             $message->to($request->email)
-                ->subject('VELOX VIP Verification Code');
+                ->subject('Ocean Ecom VIP Verification Code');
         });
 
         return response()->json([

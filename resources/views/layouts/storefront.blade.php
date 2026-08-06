@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'VELOX - Premium Luxury E-Commerce')</title>
+    <title>@yield('title', 'Ocean Ecom - Premium Luxury E-Commerce')</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23FF6B00%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><circle cx=%228%22 cy=%2221%22 r=%221%22></circle><circle cx=%2219%22 cy=%2221%22 r=%221%22></circle><path d=%22M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12%22></path></svg>">
     <!-- Premium Fonts -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 </head>
@@ -14,7 +16,7 @@
         <div class="nav-container">
             <!-- Brand Logo -->
             <a href="{{ route('home') }}" class="logo">
-                VELO<span>X</span>
+                Ocean <span>Ecom</span>
             </a>
 
             <!-- Navigation Links & Mega Menu Trigger -->
@@ -90,12 +92,34 @@
                 </button>
                 <span id="nav-user-container">
                     @auth
-                        <a href="{{ route('dashboard') }}" style="display:flex; align-items:center; gap:0.5rem; text-decoration:none; color:var(--text-primary); font-weight:700; font-size:0.9rem;" title="Go to Dashboard">
-                            <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">
-                                {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                        <div class="user-dropdown-wrapper" style="position: relative; display: inline-block;">
+                            <a href="{{ route('dashboard') }}" style="display:flex; align-items:center; gap:0.5rem; text-decoration:none; color:var(--text-primary); font-weight:700; font-size:0.9rem;" title="Go to Dashboard">
+                                <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;">
+                                    {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                                </div>
+                                <span class="user-name-header" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ auth()->user()->name }}</span>
+                                <span style="font-size: 0.55rem; color: var(--text-secondary); margin-left: 2px;">▼</span>
+                            </a>
+                            <div class="user-dropdown-menu glass" style="display: none; position: absolute; top: 100%; right: 0; width: 170px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--white); box-shadow: var(--shadow-md); z-index: 10000; overflow: hidden; padding: 0.5rem 0;">
+                                <style>
+                                    .user-dropdown-wrapper:hover .user-dropdown-menu {
+                                        display: block !important;
+                                    }
+                                </style>
+                                <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;">
+                                    <li><a href="{{ route('my-profile') }}" style="display: block; padding: 0.6rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: var(--transition);" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='none'">My Profile</a></li>
+                                    <li><a href="{{ route('my-orders') }}" style="display: block; padding: 0.6rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: var(--transition);" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='none'">My Orders</a></li>
+                                    <li><a href="{{ route('my-wishlist') }}" style="display: block; padding: 0.6rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: var(--transition);" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='none'">My Wishlist</a></li>
+                                    <li><a href="{{ route('saved-addresses') }}" style="display: block; padding: 0.6rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: var(--transition);" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='none'">Saved Addresses</a></li>
+                                    <li style="border-top: 1px solid var(--border-color); margin-top: 0.25rem; padding-top: 0.25rem;">
+                                        <a href="#" onclick="event.preventDefault(); document.getElementById('header-logout-form').submit();" style="display: block; padding: 0.6rem 1rem; color: #EF4444; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: var(--transition);" onmouseover="this.style.background='rgba(239,68,68,0.05)'" onmouseout="this.style.background='none'">Logout</a>
+                                        <form id="header-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                            @csrf
+                                        </form>
+                                    </li>
+                                </ul>
                             </div>
-                            <span class="user-name-header" style="max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ auth()->user()->name }}</span>
-                        </a>
+                        </div>
                     @else
                         <a href="{{ route('auth') }}" class="action-btn" title="Sign In">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -157,13 +181,19 @@
     <footer>
         <div class="footer-container">
             <div class="footer-column">
-                <h2 style="font-weight: 800; font-size: 1.5rem; color: white; margin-bottom: 1.5rem;">VELO<span>X</span></h2>
+                <h2 style="font-weight: 800; font-size: 1.5rem; color: white; margin-bottom: 1.5rem;">Ocean <span>Ecom</span></h2>
                 <p>Curators of luxury, premium lifestyle products. Delivering aesthetic distinction and performance to modern shoppers globally.</p>
-                <div style="display: flex; gap: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: center;">
                     <!-- Social icons mock -->
-                    <a href="#" style="color: var(--primary);">Instagram</a>
-                    <a href="#" style="color: white; opacity:0.8;">Twitter</a>
-                    <a href="#" style="color: white; opacity:0.8;">Pinterest</a>
+                    <a href="#" style="color: var(--primary); display: flex; align-items: center;" title="Instagram">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </a>
+                    <a href="#" style="color: white; opacity: 0.8; display: flex; align-items: center; transition: var(--transition);" title="Twitter" onmouseover="this.style.opacity=1; this.style.color='var(--primary)'" onmouseout="this.style.opacity=0.8; this.style.color='white'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></svg>
+                    </a>
+                    <a href="#" style="color: white; opacity: 0.8; display: flex; align-items: center; transition: var(--transition);" title="Pinterest" onmouseover="this.style.opacity=1; this.style.color='var(--primary)'" onmouseout="this.style.opacity=0.8; this.style.color='white'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22a10 10 0 0 1-1.91-8.39c.54-2.4 2.23-6.4 5.91-6.4 2.8 0 4 2.05 4 4.56 0 2.81-1.22 5.16-3 5.16-1 0-1.62-.79-1.39-1.74.27-1.12.78-2.32.78-3.13 0-.72-.39-1.32-1.22-1.32-1 0-1.74 1-1.74 2.37 0 .86.3 1.44.3 1.44l-1.2 5.07C7.8 21.57 8 22 8 22z"></path></svg>
+                    </a>
                 </div>
             </div>
             <div class="footer-column">
@@ -193,19 +223,18 @@
                 </ul>
             </div>
             <div class="footer-column" style="grid-column: span 1;">
-                <h3>Newsletter</h3>
-                <p style="font-size: 0.85rem;">Subscribe to receive updates on premium collection releases and exclusive offers.</p>
-                <form onsubmit="event.preventDefault(); alert('Subscribed to VIP Newsletter!');" style="display: flex; gap: 0.5rem;">
-                    <input type="email" placeholder="Your VIP email" required style="padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; flex-grow: 1; outline: none; font-size: 0.9rem;">
-                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.25rem;">
-                        Join
-                    </button>
-                </form>
+                <h3>Registered Office Address</h3>
+                <p style="font-size: 0.85rem; line-height: 1.6; color: #9CA3AF;">
+                    Office no - 103, Alpha One Complex,<br>
+                    150 Feet Ring Rd, nr. Ambedakar Chowk,<br>
+                    Ambedkar Nagar, Samrat Industrial Area,<br>
+                    Rajkot, Gujarat 360004
+                </p>
             </div>
         </div>
 
         <div style="max-width: 1400px; margin: 0 auto; margin-bottom: 2rem;">
-            <h4 style="font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 1rem;">Instagram Gallery @VELOX</h4>
+            <h4 style="font-size: 1.1rem; font-weight: 700; color: white; margin-bottom: 1rem;">Instagram Gallery @OceanEcom</h4>
             <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem;">
                 <div style="border-radius: var(--radius-sm); overflow: hidden; height: 100px; background: rgba(255,255,255,0.05);"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&auto=format&fit=crop" style="width:100%; height:100%; object-fit:cover; opacity: 0.8; transition: var(--transition);" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8"></div>
                 <div style="border-radius: var(--radius-sm); overflow: hidden; height: 100px; background: rgba(255,255,255,0.05);"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=150&auto=format&fit=crop" style="width:100%; height:100%; object-fit:cover; opacity: 0.8; transition: var(--transition);" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.8"></div>
@@ -217,7 +246,7 @@
         </div>
 
         <div class="footer-bottom">
-            <div>&copy; 2026 VELOX Luxury. All Rights Reserved.</div>
+            <div>&copy; 2026 Ocean Ecom. All Rights Reserved.</div>
             <div style="display: flex; gap: 1.5rem;">
                 <span>Visa / Mastercard / ApplePay / GPay</span>
             </div>
@@ -226,6 +255,19 @@
 
     <!-- Core interactive Script -->
     <script src="{{ asset('js/app.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            @if(session('success'))
+                window.showToast("{{ session('success') }}", 'success');
+            @endif
+            @if(session('error'))
+                window.showToast("{{ session('error') }}", 'error');
+            @endif
+            @if(session('info'))
+                window.showToast("{{ session('info') }}", 'info');
+            @endif
+        });
+    </script>
     @yield('scripts')
 </body>
 </html>

@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Our Story - VELOX')
+@section('title', 'Our Story - Ocean Ecom')
 
 @section('content')
 <div style="margin-top: 2rem;">
@@ -8,7 +8,7 @@
     <div style="text-align: center; max-width: 700px; margin: 0 auto 5rem;">
         <span style="font-weight: 700; color: var(--primary); font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">EST. 2026</span>
         <h1 style="font-size: 3rem; font-weight: 850; margin-top: 0.5rem; margin-bottom: 1.5rem;">Curation of Luxury Aesthetics</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6;">Velox was founded to address a clear gap in modern e-commerce: the synergy between pure minimalist design, uncompromising technical material selection, and modern digital ease.</p>
+        <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.6;">Ocean Ecom was founded to address a clear gap in modern e-commerce: the synergy between pure minimalist design, uncompromising technical material selection, and modern digital ease.</p>
     </div>
 
     <!-- Image + Story grid -->

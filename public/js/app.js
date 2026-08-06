@@ -243,42 +243,115 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Toast Notifier
-    function showToast(message) {
+    window.showToast = function(message, type = 'success') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = `
+                position: fixed;
+                top: 2rem;
+                right: 2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                z-index: 99999;
+                pointer-events: none;
+            `;
+            document.body.appendChild(container);
+        }
+
         const toast = document.createElement('div');
+        toast.style.pointerEvents = 'auto';
+        
+        let color = '#10B981'; // Green
+        let title = 'Success';
+        let iconBg = '#d1fae5';
+        let iconColor = '#065f46';
+        let iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        
+        if (type === 'error') {
+            color = '#EF4444'; // Red
+            title = 'Error';
+            iconBg = '#fee2e2';
+            iconColor = '#991b1b';
+            iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+        } else if (type === 'info') {
+            color = '#3B82F6'; // Blue
+            title = 'Info';
+            iconBg = '#dbeafe';
+            iconColor = '#1e3a8a';
+            iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+        }
+
         toast.style.cssText = `
-            position: fixed;
-            bottom: 2rem;
-            left: 2rem;
-            background: var(--dark-grey);
-            color: var(--white);
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-premium);
-            z-index: 9999;
-            font-weight: 500;
-            font-size: 0.95rem;
+            width: 350px;
+            background: #ffffff;
+            color: #1f2937;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border-left: 6px solid ${color};
+            position: relative;
+            overflow: hidden;
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transform: translateY(100px);
+            flex-direction: column;
+            padding: 0.9rem 1.1rem 0.9rem 0.9rem;
+            transform: translateX(120%);
             opacity: 0;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            border: 1px solid var(--border-color);
         `;
+
         toast.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            ${message}
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="background: ${iconBg}; color: ${iconColor}; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    ${iconSvg}
+                </div>
+                <div style="flex-grow: 1; padding-top: 1px;">
+                    <div style="font-weight: 700; font-size: 0.9rem; color: #111827; margin-bottom: 0.15rem;">${title}</div>
+                    <div style="font-size: 0.85rem; color: #4b5563; line-height: 1.4;">${message}</div>
+                </div>
+                <button class="toast-close-btn" style="border: none; background: none; color: #9ca3af; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='#111827'" onmouseout="this.style.color='#9ca3af'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.03);">
+                <div class="toast-progress" style="width: 100%; height: 100%; background: ${color}; transform-origin: left; animation: toastProgressAnim 3s linear forwards;"></div>
+            </div>
+            <style>
+                @keyframes toastProgressAnim {
+                    to { transform: scaleX(0); }
+                }
+            </style>
         `;
-        document.body.appendChild(toast);
+
+        container.appendChild(toast);
+
         setTimeout(() => {
-            toast.style.transform = 'translateY(0)';
+            toast.style.transform = 'translateX(0)';
             toast.style.opacity = '1';
         }, 50);
 
-        setTimeout(() => {
-            toast.style.transform = 'translateY(100px)';
+        const closeBtn = toast.querySelector('.toast-close-btn');
+        const dismissToast = () => {
+            toast.style.transform = 'translateX(120%)';
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 400);
-        }, 3000);
-    }
+        };
+
+        closeBtn.addEventListener('click', dismissToast);
+
+        let autoDismissTimeout = setTimeout(dismissToast, 3000);
+        
+        toast.addEventListener('mouseenter', () => {
+            clearTimeout(autoDismissTimeout);
+            const progress = toast.querySelector('.toast-progress');
+            if (progress) progress.style.animationPlayState = 'paused';
+        });
+
+        toast.addEventListener('mouseleave', () => {
+            autoDismissTimeout = setTimeout(dismissToast, 1500);
+            const progress = toast.querySelector('.toast-progress');
+            if (progress) progress.style.animationPlayState = 'running';
+        });
+    };
 });

@@ -60,7 +60,17 @@
                     <button onclick="changeDetailQty(1)" style="border: none; background: none; font-size: 1.25rem; cursor: pointer; color: var(--text-primary);">+</button>
                 </div>
                 <button class="btn btn-primary" style="flex-grow: 1; padding: 1.1rem;" onclick="addDetailToCart()">Add to Bag</button>
-                <button class="btn btn-secondary" style="padding: 1.1rem 2rem;" onclick="location.href='{{ route('checkout') }}'">Buy Now</button>
+                <button class="btn btn-secondary" style="padding: 1.1rem 2rem;" onclick="handleBuyNow()">Buy Now</button>
+            </div>
+
+            <!-- Pincode Delivery Check Widget -->
+            <div style="margin: 2rem 0; padding: 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: rgba(0,0,0,0.02);">
+                <label style="display: block; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem; letter-spacing: 1px;">Delivery Check</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="pincode-input" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 6);" placeholder="Enter Pincode (e.g. 360001)" style="flex-grow: 1; padding: 0.6rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); outline: none; font-size: 0.9rem; background: var(--white); color: var(--text-primary);">
+                    <button onclick="checkPincodeEstimate()" class="btn btn-primary" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; width: fit-content;">Check</button>
+                </div>
+                <div id="pincode-result" style="margin-top: 0.75rem; font-size: 0.85rem; font-weight: 600; display: none;"></div>
             </div>
 
             <div style="display: flex; gap: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
@@ -164,6 +174,40 @@
 
     function addDetailToCart() {
         addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }}, '{{ $product->img }}', qty);
+    }
+
+    let isPincodeChecked = false;
+
+    function checkPincodeEstimate() {
+        const pincode = document.getElementById('pincode-input').value.trim();
+        const resultDiv = document.getElementById('pincode-result');
+        if (!pincode || pincode.length < 6 || isNaN(pincode)) {
+            resultDiv.style.color = '#EF4444';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '✕ Please enter a valid 6-digit Pincode.';
+            isPincodeChecked = false;
+            return;
+        }
+
+        const days = parseInt(pincode[0]) % 3 + 2; // Mock delivery days
+        const date = new Date();
+        date.setDate(date.getDate() + days);
+        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        const deliveryDateStr = date.toLocaleDateString('en-US', options);
+
+        resultDiv.style.color = '#10B981';
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `🚚 Delivery expected by <strong>${deliveryDateStr}</strong> (${days} days delivery).`;
+        isPincodeChecked = true;
+    }
+
+    function handleBuyNow() {
+        if (!isPincodeChecked) {
+            window.showToast("Please enter and check a valid Pincode before proceeding.", "error");
+            document.getElementById('pincode-input').focus();
+            return;
+        }
+        location.href = '{{ route("checkout") }}';
     }
 </script>
 @endsection

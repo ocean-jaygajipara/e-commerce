@@ -3,7 +3,9 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Store Administration - VELOX</title>
+        <title>Store Administration - Ocean Ecom</title>
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23FF6B00%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><circle cx=%228%22 cy=%2221%22 r=%221%22></circle><circle cx=%2219%22 cy=%2221%22 r=%221%22></circle><path d=%22M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12%22></path></svg>">
         <link rel="stylesheet" href="{{ asset('css/style.css') }}">
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -114,14 +116,14 @@
         }
 
         .admin-logo {
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             font-weight: 900;
-            letter-spacing: 3px;
+            letter-spacing: 1px;
             color: var(--text-primary);
             margin-bottom: 2.5rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .admin-logo span {
@@ -380,8 +382,8 @@
 
     <!-- Left Sidebar Menu -->
     <aside class="admin-sidebar">
-        <div class="admin-logo" style="font-weight: 800; letter-spacing: 2px;">
-            VELO<span style="color: var(--primary);">X</span><span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); background: var(--border-color); padding: 0.25rem 0.6rem; border-radius: 4px; margin-left: 0.5rem; letter-spacing: 1px;">ADMIN</span>
+        <div class="admin-logo" style="font-weight: 800; letter-spacing: 0.5px;">
+            Ocean <span style="color: var(--primary);">Ecom</span><span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); background: var(--border-color); padding: 0.2rem 0.5rem; border-radius: 4px; margin-left: 0.4rem; letter-spacing: 0.5px;">ADMIN</span>
         </div>
 
         <nav class="admin-nav-list">
@@ -420,7 +422,7 @@
         <!-- Top Bar -->
         <header class="admin-topbar">
             <div>
-                <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">Server Status: <span style="color:#10B981; font-weight:700;">● Online</span></span>
+                <h1 style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary); letter-spacing: 0.5px;">Dashboard Console</h1>
             </div>
             <div style="display: flex; align-items: center; gap: 1.5rem;">
                 <!-- Theme Toggle Button -->
@@ -499,6 +501,14 @@
                                         <td>
                                             <div style="font-weight: 600;">{{ $item->user->name }}</div>
                                             <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ $item->user->email }}</div>
+                                            @if($item->status === 'Returned')
+                                                <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #EF4444; border-radius: var(--radius-sm); font-size: 0.8rem;">
+                                                    <strong style="color: #EF4444;">Return Reason:</strong> {{ $item->return_reason }}
+                                                    @if($item->return_comment)
+                                                        <br><span style="color: var(--text-secondary);">Comment: {{ $item->return_comment }}</span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </td>
                                         <td>
                                             @foreach($item->items as $prod)
@@ -508,11 +518,12 @@
                                         <td style="font-weight: 700;">₹{{ number_format($item->total, 2) }}</td>
                                         <td style="color: var(--text-secondary);">{{ $item->created_at->format('M d, Y') }}</td>
                                         <td>
-                                            <select class="select2-status" onchange="updateOrderStatus({{ $item->id }}, this.value)" style="width: 150px;">
+                                            <select class="select2-status" onchange="updateOrderStatus({{ $item->id }}, this.value)" style="width: 150px; padding: 0.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: {{ in_array($item->status, ['Delivered', 'Returned']) ? 'rgba(0,0,0,0.05)' : 'var(--bg-primary)' }}; color: var(--text-primary); outline: none;" {{ in_array($item->status, ['Delivered', 'Returned']) ? 'disabled' : '' }}>
                                                 <option value="Confirmed" {{ $item->status == 'Confirmed' ? 'selected' : '' }}>Confirmed</option>
                                                 <option value="Packed" {{ $item->status == 'Packed' ? 'selected' : '' }}>Packed</option>
                                                 <option value="Shipped" {{ $item->status == 'Shipped' ? 'selected' : '' }}>Shipped</option>
                                                 <option value="Delivered" {{ $item->status == 'Delivered' ? 'selected' : '' }}>Delivered</option>
+                                                <option value="Returned" {{ $item->status == 'Returned' ? 'selected' : '' }}>Returned</option>
                                             </select>
                                         </td>
                                     </tr>
@@ -605,7 +616,7 @@
                         </div>
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Brand Name</label>
-                            <input type="text" name="brand" required placeholder="e.g. VELOX LUXURY" style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;">
+                            <input type="text" name="brand" required placeholder="e.g. Ocean Ecom" style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;">
                         </div>
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Price (in Rupees ₹)</label>

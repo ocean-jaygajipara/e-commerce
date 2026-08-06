@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Authentication - VELOX')
+@section('title', 'Authentication - Ocean Ecom')
 
 @section('content')
 <div style="max-width: 550px; margin: 4rem auto; min-height: 500px;">
@@ -36,7 +36,7 @@
         <!-- Register Form -->
         <div id="auth-register" class="auth-content-pane" style="display: none;">
             <h2 style="font-size: 1.5rem; font-weight: 850; margin-bottom: 0.5rem;">Create Account</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem;">Join the VELOX VIP membership.</p>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem;">Join the Ocean Ecom VIP membership.</p>
             
             <form id="register-form" onsubmit="handleRegister(event)" style="display: flex; flex-direction: column; gap: 1.5rem;">
                 @csrf

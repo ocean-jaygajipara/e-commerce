@@ -12,6 +12,8 @@ class Order extends Model
         'total',
         'status',
         'items',
+        'return_reason',
+        'return_comment',
     ];
 
     protected $casts = [

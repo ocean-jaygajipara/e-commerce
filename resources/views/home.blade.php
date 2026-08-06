@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'VELOX - Luxury E-Commerce Home')
+@section('title', 'Ocean Ecom - Luxury E-Commerce Home')
 
 @section('content')
     <!-- Hero Banner with CTA -->

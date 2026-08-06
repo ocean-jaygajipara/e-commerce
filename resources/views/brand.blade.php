@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Featured Brands - VELOX')
+@section('title', 'Featured Brands - Ocean Ecom')
 
 @section('content')
 <div style="margin-top: 2rem;">

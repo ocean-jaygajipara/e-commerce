@@ -38,6 +38,7 @@ Route::post('/auth/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Real Order Routes
 Route::post('/checkout/order', [\App\Http\Controllers\OrderController::class, 'placeOrder'])->name('order.place');
+Route::post('/order/{id}/return', [\App\Http\Controllers\OrderController::class, 'returnOrder'])->name('order.return');
 Route::get('/api/track-order', [\App\Http\Controllers\OrderController::class, 'getOrderStatus']);
 
 // Real Admin Routes
@@ -64,6 +65,34 @@ Route::get('/dashboard', function () {
     }
     return view('dashboard');
 })->name('dashboard');
+
+Route::get('/my-order', function () {
+    if (!auth()->check()) {
+        return redirect()->route('auth');
+    }
+    return view('dashboard', ['activeTab' => 'orders']);
+})->name('my-orders');
+
+Route::get('/my-profile', function () {
+    if (!auth()->check()) {
+        return redirect()->route('auth');
+    }
+    return view('dashboard', ['activeTab' => 'profile']);
+})->name('my-profile');
+
+Route::get('/my-wishlist', function () {
+    if (!auth()->check()) {
+        return redirect()->route('auth');
+    }
+    return view('dashboard', ['activeTab' => 'wishlist']);
+})->name('my-wishlist');
+
+Route::get('/saved-addresses', function () {
+    if (!auth()->check()) {
+        return redirect()->route('auth');
+    }
+    return view('dashboard', ['activeTab' => 'addresses']);
+})->name('saved-addresses');
 
 Route::get('/search', function () {
     return view('search');

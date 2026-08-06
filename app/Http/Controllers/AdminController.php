@@ -71,10 +71,18 @@ class AdminController extends Controller implements HasMiddleware
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => ['required', 'string', 'in:Confirmed,Packed,Shipped,Delivered'],
+            'status' => ['required', 'string', 'in:Confirmed,Packed,Shipped,Delivered,Returned'],
         ]);
 
         $order = Order::findOrFail($id);
+
+        if ($order->status === 'Delivered') {
+            return response()->json([
+                'success' => false,
+                'message' => "This order has already been Delivered. Status cannot be modified anymore."
+            ], 422);
+        }
+
         $order->status = $request->status;
         $order->save();
 

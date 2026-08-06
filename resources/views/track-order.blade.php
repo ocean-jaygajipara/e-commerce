@@ -17,31 +17,14 @@
 
     <!-- Stepper Tracker Container -->
     <div id="tracking-progress-container" class="glass" style="border-radius: var(--radius-md); padding: 3rem 2rem; border: 1px solid var(--border-color); display: none;">
-        <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
             <span style="font-size: 0.85rem; color: var(--primary); font-weight: 700;">CONSIGNMENT STATUS</span>
-            <h3 style="font-size: 1.5rem; font-weight: 800; margin-top: 0.25rem;" id="consignment-title">In Transit</h3>
+            <h3 style="font-size: 1.5rem; font-weight: 800; margin-top: 0.25rem; margin-bottom: 0.5rem;" id="consignment-title">In Transit</h3>
+            <div id="expected-delivery-date" style="font-size: 1rem; font-weight: 700; color: #10B981;"></div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; position: relative; margin: 2rem 0;">
-            <div style="position: absolute; top: 14px; left: 10%; right: 10%; height: 4px; background: var(--border-color); z-index: 1;"></div>
-            <div id="tracking-progress-line" style="position: absolute; top: 14px; left: 10%; width: 0%; height: 4px; background: var(--primary); z-index: 2; transition: width 0.4s ease;"></div>
-
-            <div style="display: flex; flex-direction: column; align-items: center; z-index: 5; background: var(--white); padding: 0 10px;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;">✓</div>
-                <span style="font-size: 0.85rem; font-weight: 700; margin-top: 0.5rem; color: var(--text-primary);">Confirmed</span>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: center; z-index: 5; background: var(--white); padding: 0 10px;">
-                <div id="step-2" style="width: 32px; height: 32px; border-radius: 50%; background: var(--light-grey); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: 1px solid var(--border-color);">2</div>
-                <span style="font-size: 0.85rem; font-weight: 500; margin-top: 0.5rem; color: var(--text-secondary);">Packed</span>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: center; z-index: 5; background: var(--white); padding: 0 10px;">
-                <div id="step-3" style="width: 32px; height: 32px; border-radius: 50%; background: var(--light-grey); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: 1px solid var(--border-color);">🚚</div>
-                <span style="font-size: 0.85rem; font-weight: 500; margin-top: 0.5rem; color: var(--text-secondary);">Shipped</span>
-            </div>
-            <div style="display: flex; flex-direction: column; align-items: center; z-index: 5; background: var(--white); padding: 0 10px;">
-                <div id="step-4" style="width: 32px; height: 32px; border-radius: 50%; background: var(--light-grey); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: 1px solid var(--border-color);">🏠</div>
-                <span style="font-size: 0.85rem; font-weight: 500; margin-top: 0.5rem; color: var(--text-secondary);">Delivered</span>
-            </div>
+        <div id="tracking-steps-wrapper" style="display: flex; justify-content: space-between; position: relative; margin: 2rem 0;">
+            <!-- Rendered dynamically via JS -->
         </div>
     </div>
 </div>
@@ -53,10 +36,6 @@
         const input = document.getElementById('tracking-input').value.trim();
         const container = document.getElementById('tracking-progress-container');
         const title = document.getElementById('consignment-title');
-        const progressLine = document.getElementById('tracking-progress-line');
-        const step2 = document.getElementById('step-2');
-        const step3 = document.getElementById('step-3');
-        const step4 = document.getElementById('step-4');
 
         try {
             const response = await fetch(`/api/track-order?order_number=${encodeURIComponent(input)}`);
@@ -66,63 +45,78 @@
                 title.innerText = 'Package Status: ' + data.status;
                 container.style.display = 'block';
 
-                let progress = 0;
-                if(data.status === 'Packed') progress = 33;
-                else if(data.status === 'Shipped') progress = 66;
-                else if(data.status === 'Delivered') progress = 100;
+                // Configure tracking steps dynamically
+                let steps = [
+                    { name: 'Confirmed', key: 'Confirmed', icon: '1' },
+                    { name: 'Packed', key: 'Packed', icon: '2' },
+                    { name: 'Shipped', key: 'Shipped', icon: '🚚' },
+                    { name: 'Delivered', key: 'Delivered', icon: '🏠' }
+                ];
 
-                progressLine.style.width = (progress * 0.8) + '%';
-
-                // Packed (step 2)
-                if (progress >= 33) {
-                    step2.style.background = 'var(--primary)';
-                    step2.style.color = 'white';
-                    step2.style.border = 'none';
-                    step2.innerText = '✓';
-                    step2.nextElementSibling.style.fontWeight = '700';
-                    step2.nextElementSibling.style.color = 'var(--text-primary)';
-                } else {
-                    step2.style.background = 'var(--light-grey)';
-                    step2.style.color = 'var(--text-secondary)';
-                    step2.style.border = '1px solid var(--border-color)';
-                    step2.innerText = '2';
-                    step2.nextElementSibling.style.fontWeight = '500';
-                    step2.nextElementSibling.style.color = 'var(--text-secondary)';
+                const isReturnFlow = (data.status === 'Returned' || data.status === 'Refunded');
+                if (isReturnFlow) {
+                    steps.push({ name: 'Returned', key: 'Returned', icon: '↩' });
+                    steps.push({ name: 'Refunded', key: 'Refunded', icon: '💰' });
                 }
 
-                // Shipped (step 3)
-                if (progress >= 66) {
-                    step3.style.background = 'var(--primary)';
-                    step3.style.color = 'white';
-                    step3.style.border = 'none';
-                    step3.innerText = '✓';
-                    step3.nextElementSibling.style.fontWeight = '700';
-                    step3.nextElementSibling.style.color = 'var(--text-primary)';
+                // Determine active step index
+                let activeIndex = 0;
+                if (data.status === 'Packed') activeIndex = 1;
+                else if (data.status === 'Shipped') activeIndex = 2;
+                else if (data.status === 'Delivered') activeIndex = 3;
+                else if (data.status === 'Returned') activeIndex = 4;
+                else if (data.status === 'Refunded') activeIndex = 5;
+
+                // Set progress line width based on active index
+                let progressPercentage = 0;
+                if (isReturnFlow) {
+                    progressPercentage = (activeIndex / 5) * 80;
                 } else {
-                    step3.style.background = 'var(--light-grey)';
-                    step3.style.color = 'var(--text-secondary)';
-                    step3.style.border = '1px solid var(--border-color)';
-                    step3.innerText = '🚚';
-                    step3.nextElementSibling.style.fontWeight = '500';
-                    step3.nextElementSibling.style.color = 'var(--text-secondary)';
+                    progressPercentage = (activeIndex / 3) * 80;
                 }
 
-                // Delivered (step 4)
-                if (progress >= 100) {
-                    step4.style.background = 'var(--primary)';
-                    step4.style.color = 'white';
-                    step4.style.border = 'none';
-                    step4.innerText = '✓';
-                    step4.nextElementSibling.style.fontWeight = '700';
-                    step4.nextElementSibling.style.color = 'var(--text-primary)';
+                // Mock estimated delivery date or details
+                if (data.status === 'Refunded') {
+                    document.getElementById('expected-delivery-date').innerHTML = `✓ Refund Processed Successfully!`;
+                } else if (data.status === 'Returned') {
+                    document.getElementById('expected-delivery-date').innerHTML = `↩ Package Returned. Refund is being processed.`;
                 } else {
-                    step4.style.background = 'var(--light-grey)';
-                    step4.style.color = 'var(--text-secondary)';
-                    step4.style.border = '1px solid var(--border-color)';
-                    step4.innerText = '🏠';
-                    step4.nextElementSibling.style.fontWeight = '500';
-                    step4.nextElementSibling.style.color = 'var(--text-secondary)';
+                    const estDate = new Date();
+                    if (activeIndex < 3) {
+                        estDate.setDate(estDate.getDate() + (3 - activeIndex));
+                        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+                        document.getElementById('expected-delivery-date').innerHTML = `🚚 Expected Delivery: <span style="color:var(--text-primary);">${estDate.toLocaleDateString('en-US', options)}</span>`;
+                    } else {
+                        document.getElementById('expected-delivery-date').innerHTML = `✓ Package Delivered Successfully!`;
+                    }
                 }
+
+                // Draw Steps HTML
+                let stepsHtml = `
+                    <div style="position: absolute; top: 14px; left: 10%; right: 10%; height: 4px; background: var(--border-color); z-index: 1;"></div>
+                    <div style="position: absolute; top: 14px; left: 10%; width: ${progressPercentage}%; height: 4px; background: var(--primary); z-index: 2; transition: width 0.4s ease;"></div>
+                `;
+
+                steps.forEach((step, idx) => {
+                    const isDone = idx <= activeIndex;
+                    const iconContent = isDone ? '✓' : step.icon;
+                    const bg = isDone ? 'var(--primary)' : 'var(--light-grey)';
+                    const color = isDone ? 'white' : 'var(--text-secondary)';
+                    const border = isDone ? 'none' : '1px solid var(--border-color)';
+                    const fontW = isDone ? '700' : '500';
+                    const textC = isDone ? 'var(--text-primary)' : 'var(--text-secondary)';
+
+                    stepsHtml += `
+                        <div style="display: flex; flex-direction: column; align-items: center; z-index: 5; background: var(--white); padding: 0 10px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${bg}; color: ${color}; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; border: ${border}; font-weight: 700;">
+                                ${iconContent}
+                            </div>
+                            <span style="font-size: 0.85rem; font-weight: ${fontW}; margin-top: 0.5rem; color: ${textC};">${step.name}</span>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('tracking-steps-wrapper').innerHTML = stepsHtml;
             } else {
                 alert(data.message || 'Consignment code not found.');
                 container.style.display = 'none';

@@ -48,12 +48,13 @@
             <!-- Price Filter Slider -->
             <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
                 <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">Price Range</h4>
-                <input id="price-slider" type="range" min="10" max="1000" value="1000" style="width: 100%; accent-color: var(--primary); cursor: pointer;" oninput="filterProductsByPrice(this.value)">
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                <input id="price-slider" type="range" min="10" max="1000" value="1000" style="width: 100%; accent-color: var(--primary); cursor: pointer;" oninput="document.getElementById('price-val').innerText = '₹' + this.value">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 0.75rem;">
                     <span>Min: ₹10</span>
                     <span id="price-val" style="font-weight: 700; color: var(--text-primary);">₹1000</span>
                     <span>Max: ₹1000</span>
                 </div>
+                <button type="button" onclick="applyPriceFilter()" class="btn btn-primary" style="width: 100%; padding: 0.5rem 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer;">Apply Filter</button>
             </div>
 
             <!-- Rating Filter -->
@@ -104,15 +105,7 @@
             <div id="shop-results-counter" style="font-size: 0.95rem; color: var(--text-secondary);">Showing 1–8 of 24 premium products</div>
             
             <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <!-- Grid/List toggle -->
-                <div style="display: flex; gap: 0.5rem;">
-                    <button id="grid-view-btn" class="btn btn-outline" style="padding: 0.5rem; border-radius: 6px; background: var(--light-grey);">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-                    </button>
-                    <button id="list-view-btn" class="btn btn-outline" style="padding: 0.5rem; border-radius: 6px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
-                    </button>
-                </div>
+
 
                 <!-- Sorting Dropdown -->
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -128,36 +121,47 @@
         </div>
 
         <!-- Products Grid Container -->
-        <div id="shop-product-grid" class="grid-container">
-            <!-- Mock Product Cards -->
-            @php
-                $dbProducts = \App\Models\Product::orderBy('created_at', 'desc')->get();
-            @endphp
-            @foreach ($dbProducts as $item)
-            <div class="product-card" data-price="{{ $item->price }}">
-                <div class="product-img-wrapper">
-                    <button class="product-wishlist-btn" onclick="toggleWishlist({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->price }}, '{{ $item->img }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                    </button>
-                    <a href="{{ route('product.details', $item->id) }}">
-                        <img src="{{ $item->img }}" alt="{{ $item->name }}">
-                    </a>
-                </div>
-                <div class="product-info">
-                    <span class="product-brand">{{ $item->brand }}</span>
-                    <a href="{{ route('product.details', $item->id) }}" class="product-title">{{ $item->name }}</a>
-                    <div class="product-rating">
-                        ★★★★★ <span>({{ $item->reviews_count }})</span>
-                    </div>
-                    <div class="product-footer">
-                        <span class="product-price">₹{{ number_format($item->price, 2) }}</span>
-                        <button class="add-to-cart-btn" onclick="addToCart({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->price }}, '{{ $item->img }}')">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                        </button>
-                    </div>
-                </div>
+        <div style="position: relative;">
+            <div id="shop-loader" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; min-height: 300px; background: rgba(255,255,255,0.7); z-index: 100; justify-content: center; align-items: center; border-radius: var(--radius-md);">
+                <div style="width: 45px; height: 45px; border: 4px solid var(--border-color); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
             </div>
-            @endforeach
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+            <div id="shop-product-grid" class="grid-container">
+                <!-- Mock Product Cards -->
+                @php
+                    $dbProducts = \App\Models\Product::orderBy('created_at', 'desc')->get();
+                @endphp
+                @foreach ($dbProducts as $item)
+                <div class="product-card" data-price="{{ $item->price }}">
+                    <div class="product-img-wrapper">
+                        <button class="product-wishlist-btn" onclick="toggleWishlist({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->price }}, '{{ $item->img }}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        </button>
+                        <a href="{{ route('product.details', $item->id) }}">
+                            <img src="{{ $item->img }}" alt="{{ $item->name }}">
+                        </a>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-brand">{{ $item->brand }}</span>
+                        <a href="{{ route('product.details', $item->id) }}" class="product-title">{{ $item->name }}</a>
+                        <div class="product-rating">
+                            ★★★★★ <span>({{ $item->reviews_count }})</span>
+                        </div>
+                        <div class="product-footer">
+                            <span class="product-price">₹{{ number_format($item->price, 2) }}</span>
+                            <button class="add-to-cart-btn" onclick="addToCart({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->price }}, '{{ $item->img }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
         </div>
 
         <!-- Pagination Controls -->
@@ -170,30 +174,19 @@
 
 @section('scripts')
 <script>
-    // Grid/List View switcher demonstration
-    const gridBtn = document.getElementById('grid-view-btn');
-    const listBtn = document.getElementById('list-view-btn');
-    const gridContainer = document.getElementById('shop-product-grid');
 
-    if(gridBtn && listBtn && gridContainer) {
-        listBtn.addEventListener('click', () => {
-            gridContainer.style.gridTemplateColumns = '1fr';
-            listBtn.style.background = 'var(--light-grey)';
-            gridBtn.style.background = 'transparent';
-        });
 
-        gridBtn.addEventListener('click', () => {
-            gridContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
-            gridBtn.style.background = 'var(--light-grey)';
-            listBtn.style.background = 'transparent';
-        });
-    }
-
-    function filterProductsByPrice(maxPrice) {
-        currentMaxPrice = parseFloat(maxPrice);
-        document.getElementById('price-val').innerText = '₹' + maxPrice;
-        currentPage = 1;
-        filterAndPaginate();
+    function applyPriceFilter() {
+        const loader = document.getElementById('shop-loader');
+        const sliderVal = document.getElementById('price-slider').value;
+        if(loader) loader.style.display = 'flex';
+        
+        setTimeout(() => {
+            if(loader) loader.style.display = 'none';
+            currentMaxPrice = parseFloat(sliderVal);
+            currentPage = 1;
+            filterAndPaginate();
+        }, 600); // Premium loading spinner delay
     }
 
     function resetAllFilters() {
@@ -206,8 +199,9 @@
         const slider = document.getElementById('price-slider');
         if (slider) {
             slider.value = 1000;
+            document.getElementById('price-val').innerText = '₹1000';
         }
-        filterProductsByPrice(1000);
+        applyPriceFilter();
     }
 
     // Dynamic Pagination State & Logic

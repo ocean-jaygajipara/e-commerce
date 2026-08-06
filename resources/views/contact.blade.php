@@ -1,6 +1,6 @@
 @extends('layouts.storefront')
 
-@section('title', 'Contact Us - VELOX')
+@section('title', 'Contact Us - Ocean Ecom')
 
 @section('content')
 <div style="margin-top: 2rem;">
@@ -11,11 +11,11 @@
         <!-- Left: Details & Map -->
         <div>
             <div class="glass" style="border-radius: var(--radius-md); padding: 2rem; border: 1px solid var(--border-color); margin-bottom: 2rem;">
-                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Velox Flagship Store</h3>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">Ocean Ecom Flagship Store</h3>
                 <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem;">
                     📍 123 Luxury Promenade, Beverly Hills, CA 90210<br>
                     📞 +1 (310) 555-8900<br>
-                    ✉️ concierge@veloxluxury.com
+                    ✉️ concierge@oceanecom.com
                 </p>
                 <h4 style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; margin-top: 1.5rem;">Hours of Operation</h4>
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">Monday - Saturday: 10:00 AM - 8:00 PM<br>Sunday: 12:00 PM - 6:00 PM</p>
