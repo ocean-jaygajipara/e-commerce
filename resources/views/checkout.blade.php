@@ -60,24 +60,13 @@
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
                     <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: var(--transition);" class="delivery-label">
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <input type="radio" name="delivery" checked style="accent-color: var(--primary);">
+                            <input type="radio" name="delivery" checked onclick="selectDeliveryMethod(0)" style="accent-color: var(--primary);">
                             <div>
                                 <div style="font-weight: 700; font-size: 0.95rem;">Standard Luxury Delivery</div>
                                 <div style="font-size: 0.85rem; color: var(--text-secondary);">Deliver in 2-3 business days</div>
                             </div>
                         </div>
                         <span style="font-weight: 700; color: #10B981;">FREE</span>
-                    </label>
-
-                    <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: var(--transition);" class="delivery-label">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <input type="radio" name="delivery" style="accent-color: var(--primary);">
-                            <div>
-                                <div style="font-weight: 700; font-size: 0.95rem;">Next-Day VIP Courier</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Guaranteed delivery tomorrow</div>
-                            </div>
-                        </div>
-                        <span style="font-weight: 700;">+$25.00</span>
                     </label>
                 </div>
             </div>
@@ -140,7 +129,7 @@
         </div>
 
         <!-- Right: Sticky Order Summary & Coupon -->
-        <div style="position: sticky; top: 110px; height: fit-content; z-index: 10;">
+        <div style="position: sticky; top: 110px; height: fit-content; z-index: 10; align-self: start;">
             <div class="glass" style="border-radius: var(--radius-md); padding: 2rem; border: 1px solid var(--border-color);">
                 <h3 style="font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">Order Review</h3>
 
@@ -149,11 +138,25 @@
                     <!-- Rendered via JS -->
                 </div>
 
+                <!-- Promo Code / Coupon Section -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; margin-bottom: 1.5rem;">
+                    <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Promo Code</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="promo-code-input" placeholder="e.g. LUXURY20" style="flex-grow:1; padding:0.65rem 0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--white); color:var(--text-primary); outline:none; font-size:0.9rem; box-sizing:border-box;">
+                        <button type="button" class="btn btn-primary" onclick="applyPromoCode()" style="padding:0.65rem 1.25rem; font-size:0.85rem; width:auto; border-radius:var(--radius-sm);">Apply</button>
+                    </div>
+                    <div id="promo-status-msg" style="font-size: 0.8rem; font-weight: 600; margin-top: 0.5rem; display: none;"></div>
+                </div>
+
                 <!-- Subtotals -->
                 <div style="display: flex; flex-direction: column; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-bottom: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: var(--text-secondary);">
                         <span>Subtotal</span>
                         <span id="checkout-subtotal">₹0.00</span>
+                    </div>
+                    <div id="discount-row" style="display: none; justify-content: space-between; font-size: 0.95rem; color: #10B981;">
+                        <span>Discount (<span id="discount-percent-label">0</span>%)</span>
+                        <span id="checkout-discount">-₹0.00</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: var(--text-secondary);">
                         <span>Shipping</span>
@@ -179,6 +182,51 @@
 
 @section('scripts')
 <script>
+    let activeDiscountPercentage = 0;
+    let selectedDeliveryCost = 0;
+
+    function selectDeliveryMethod(cost) {
+        selectedDeliveryCost = cost;
+        const shippingEl = document.getElementById('checkout-shipping');
+        if (cost === 0) {
+            shippingEl.innerText = 'Free';
+            shippingEl.style.color = '#10B981';
+        } else {
+            shippingEl.innerText = `₹${cost.toFixed(2)}`;
+            shippingEl.style.color = 'var(--text-primary)';
+        }
+        renderCheckoutSummary();
+    }
+
+    function applyPromoCode() {
+        const promoInput = document.getElementById('promo-code-input').value.trim().toUpperCase();
+        const statusMsg = document.getElementById('promo-status-msg');
+        
+        if (promoInput === 'LUXURY20') {
+            activeDiscountPercentage = 20;
+            statusMsg.innerText = '✓ Promo code LUXURY20 applied successfully! 20% discount added.';
+            statusMsg.style.color = '#10B981';
+            statusMsg.style.display = 'block';
+            window.showToast('20% discount applied!', 'success');
+        } else if (promoInput === 'SUMMER10') {
+            activeDiscountPercentage = 10;
+            statusMsg.innerText = '✓ Promo code SUMMER10 applied successfully! 10% discount added.';
+            statusMsg.style.color = '#10B981';
+            statusMsg.style.display = 'block';
+            window.showToast('10% discount applied!', 'success');
+        } else if (promoInput === '') {
+            activeDiscountPercentage = 0;
+            statusMsg.style.display = 'none';
+        } else {
+            activeDiscountPercentage = 0;
+            statusMsg.innerText = '✗ Invalid promo code.';
+            statusMsg.style.color = '#EF4444';
+            statusMsg.style.display = 'block';
+            window.showToast('Invalid promo code', 'error');
+        }
+        renderCheckoutSummary();
+    }
+
     function renderCheckoutSummary() {
         const listContainer = document.getElementById('checkout-items-list');
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -192,13 +240,32 @@
         listContainer.innerHTML = cart.map(item => {
             const itemSub = item.price * item.qty;
             subtotal += itemSub;
+            
+            let colorBadge = '';
+            const matches = item.name.match(/\(([^)]+)\)/);
+            let displayName = item.name;
+            if (matches) {
+                const colorVal = matches[1].trim();
+                const prod = window.productStocks ? window.productStocks.find(p => p.id === item.id) : null;
+                let hexColor = '#ccc';
+                if (prod && prod.colors) {
+                    const foundColor = prod.colors.find(c => c.name && c.name.toLowerCase() === colorVal.toLowerCase());
+                    if (foundColor) {
+                        hexColor = foundColor.code;
+                    }
+                }
+                displayName = item.name.replace(/\([^)]+\)/, '').trim();
+                colorBadge = `<div style="display:flex; align-items:center; gap:0.4rem; margin-top:0.15rem;"><span style="width:10px; height:10px; border-radius:50%; background:${hexColor}; border:1px solid var(--border-color); display:inline-block;"></span><span style="font-size:0.75rem; color:var(--text-secondary); font-weight:600;">${colorVal}</span></div>`;
+            }
+
             return `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <div style="display:flex; gap:0.75rem; align-items:center;">
                         <img src="${item.img}" style="width:40px; height:40px; border-radius:var(--radius-sm); object-fit:cover;">
                         <div>
-                            <span style="font-weight:700; font-size:0.9rem;">${item.name}</span>
-                            <div style="font-size:0.8rem; color:var(--text-secondary);">Qty: ${item.qty}</div>
+                            <span style="font-weight:700; font-size:0.9rem;">${displayName}</span>
+                            ${colorBadge}
+                            <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.15rem;">Qty: ${item.qty}</div>
                         </div>
                     </div>
                     <span style="font-weight:700; font-size:0.9rem;">₹${itemSub.toFixed(2)}</span>
@@ -206,8 +273,19 @@
             `;
         }).join('');
 
-        const tax = subtotal * 0.08;
-        const total = subtotal + tax;
+        const discountAmount = subtotal * (activeDiscountPercentage / 100);
+        const discountedSubtotal = subtotal - discountAmount;
+        const tax = discountedSubtotal * 0.08;
+        const total = discountedSubtotal + tax + selectedDeliveryCost;
+
+        const discountRow = document.getElementById('discount-row');
+        if (activeDiscountPercentage > 0) {
+            document.getElementById('discount-percent-label').innerText = activeDiscountPercentage;
+            document.getElementById('checkout-discount').innerText = `-₹${discountAmount.toFixed(2)}`;
+            discountRow.style.display = 'flex';
+        } else {
+            discountRow.style.display = 'none';
+        }
 
         document.getElementById('checkout-subtotal').innerText = `₹${subtotal.toFixed(2)}`;
         document.getElementById('checkout-tax').innerText = `₹${tax.toFixed(2)}`;
@@ -217,17 +295,30 @@
     async function placeOrderMock() {
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         if (cart.length === 0) {
-            alert('Your cart is empty!');
+            window.showToast('Your cart is empty!', 'error');
             return;
         }
 
         let subtotal = 0;
         cart.forEach(item => subtotal += item.price * item.qty);
-        const total = subtotal * 1.08;
+        
+        const discountAmount = subtotal * (activeDiscountPercentage / 100);
+        const discountedSubtotal = subtotal - discountAmount;
+        const tax = discountedSubtotal * 0.08;
+        const total = discountedSubtotal + tax + selectedDeliveryCost;
 
         const formData = new FormData();
         formData.append('total', total.toFixed(2));
         formData.append('_token', '{{ csrf_token() }}');
+        if (activeDiscountPercentage > 0) {
+            const promoInput = document.getElementById('promo-code-input').value.trim().toUpperCase();
+            formData.append('promo_code', promoInput);
+        }
+
+        formData.append('fullname', document.getElementById('checkout-fullname').value.trim());
+        formData.append('address', document.getElementById('checkout-address').value.trim());
+        formData.append('city', document.getElementById('checkout-city').value.trim());
+        formData.append('pincode', document.getElementById('checkout-pincode').value.trim());
         
         cart.forEach((item, index) => {
             formData.append(`items[${index}][id]`, item.id);
@@ -237,12 +328,15 @@
         });
 
         @if(!auth()->check())
-            alert('Please sign in to place your order.');
-            location.href = '{{ route("auth") }}';
+            window.showToast('Please sign in to place your order.', 'error');
+            setTimeout(() => {
+                location.href = '{{ route("auth") }}';
+            }, 1500);
             return;
         @endif
 
         try {
+            document.getElementById('checkout-loader').style.display = 'flex';
             const response = await fetch('/checkout/order', {
                 method: 'POST',
                 body: formData,
@@ -252,19 +346,22 @@
             });
             const data = await response.json();
             if (data.success) {
-                alert('Thank you! Your order was placed successfully. Tracking ID: ' + data.order_number);
+                window.showToast('Thank you! Your order was placed successfully. Tracking ID: ' + data.order_number, 'success');
                 localStorage.removeItem('cart');
                 
-                // Clear cart badge
                 const cartBadge = document.querySelector('.cart-badge');
                 if(cartBadge) cartBadge.innerText = '0';
                 
-                location.href = "{{ route('track.order') }}?id=" + data.order_number;
+                setTimeout(() => {
+                    location.href = "{{ route('track.order') }}?id=" + data.order_number;
+                }, 2000);
             } else {
-                alert(data.message || 'Error placing order.');
+                document.getElementById('checkout-loader').style.display = 'none';
+                window.showToast(data.message || 'Error placing order.', 'error');
             }
         } catch (e) {
-            alert('An error occurred while placing the order.');
+            document.getElementById('checkout-loader').style.display = 'none';
+            window.showToast('An error occurred while placing the order.', 'error');
         }
     }
 
@@ -308,20 +405,26 @@
         document.getElementById('btn-change-address').style.display = 'none';
     }
 
+    const dbAddress = {
+        fullname: "{{ auth()->check() ? auth()->user()->fullname : '' }}",
+        line1: "{{ auth()->check() ? auth()->user()->address : '' }}",
+        city: "{{ auth()->check() ? auth()->user()->city : '' }}",
+        pincode: "{{ auth()->check() ? auth()->user()->pincode : '' }}"
+    };
+
     function autofillAddress() {
-        const address = JSON.parse(localStorage.getItem('default_shipping_address'));
-        if (address && address.fullname && address.line1 && address.city && address.pincode) {
-            document.getElementById('checkout-fullname').value = address.fullname;
-            document.getElementById('checkout-address').value = address.line1;
-            document.getElementById('checkout-city').value = address.city;
+        if (dbAddress && dbAddress.fullname && dbAddress.line1 && dbAddress.city && dbAddress.pincode) {
+            document.getElementById('checkout-fullname').value = dbAddress.fullname;
+            document.getElementById('checkout-address').value = dbAddress.line1;
+            document.getElementById('checkout-city').value = dbAddress.city;
             
             const pincodeInput = document.getElementById('checkout-pincode');
-            pincodeInput.value = address.pincode;
+            pincodeInput.value = dbAddress.pincode;
             pincodeInput.dispatchEvent(new Event('input'));
 
-            document.getElementById('display-name').innerText = address.fullname;
-            document.getElementById('display-pincode').innerText = address.pincode;
-            document.getElementById('display-address-text').innerText = `${address.line1}, ${address.city}`;
+            document.getElementById('display-name').innerText = dbAddress.fullname;
+            document.getElementById('display-pincode').innerText = dbAddress.pincode;
+            document.getElementById('display-address-text').innerText = `${dbAddress.line1}, ${dbAddress.city}`;
 
             document.getElementById('shipping-form').style.display = 'none';
             document.getElementById('saved-address-card').style.display = 'block';
@@ -339,4 +442,10 @@
     renderCheckoutSummary();
     autofillAddress();
 </script>
+
+<!-- Full-Screen checkout overlay loader -->
+<div id="checkout-loader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; gap: 1rem;">
+    <div style="width: 50px; height: 50px; border: 5px solid var(--border-color); border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <span style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem; letter-spacing: 0.5px;">Securing your premium order...</span>
+</div>
 @endsection

@@ -102,7 +102,7 @@
                         @foreach($orders as $item)
                             <div class="glass" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden;">
                                 <!-- Order Header Row -->
-                                <div onclick="toggleOrderDetails({{ $item->id }})" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; background: rgba(0,0,0,0.02); cursor: pointer; transition: var(--transition);" onmouseover="this.style.background='rgba(0,0,0,0.05)';" onmouseout="this.style.background='rgba(0,0,0,0.02)';">
+                                <div onclick="location.href='{{ route('track.order') }}?id={{ $item->order_number }}'" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; background: rgba(0,0,0,0.02); cursor: pointer; transition: var(--transition);" onmouseover="this.style.background='rgba(0,0,0,0.05)';" onmouseout="this.style.background='rgba(0,0,0,0.02)';">
                                     <div style="display: flex; align-items: center; gap: 1.25rem;">
                                         @php
                                             $firstItem = collect($item->items)->first();
@@ -119,97 +119,7 @@
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 1.5rem;">
                                         <span style="font-weight: 800; color: var(--text-primary); font-size: 1rem;">₹{{ number_format($item->total, 2) }}</span>
-                                        <span id="order-chevron-{{ $item->id }}" style="font-size: 0.9rem; color: var(--text-secondary); transition: transform 0.3s ease; display: inline-block;">▼</span>
-                                    </div>
-                                </div>
-
-                                <!-- Collapsible Order Details Block -->
-                                <div id="order-details-{{ $item->id }}" style="display: none; padding: 1.5rem; border-top: 1px solid var(--border-color); background: var(--white);">
-                                    <!-- Items list -->
-                                    <h5 style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-top: 0; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Items Ordered</h5>
-                                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
-                                        @foreach($item->items as $prod)
-                                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                                <div style="display: flex; align-items: center; gap: 1rem;">
-                                                    <div style="width: 50px; height: 50px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color);">
-                                                        <img src="{{ $prod['img'] ?? 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150' }}" style="width:100%; height:100%; object-fit: cover;">
-                                                    </div>
-                                                    <div>
-                                                        <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">{{ $prod['name'] }}</div>
-                                                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Qty: {{ $prod['qty'] }}</div>
-                                                    </div>
-                                                </div>
-                                                <span style="font-weight: 700; color: var(--text-primary); font-size: 0.9rem;">₹{{ number_format($prod['price'], 2) }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                    <!-- Shipping & Payment details grid -->
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 1.25rem 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
-                                        <div>
-                                            <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-top: 0; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Shipping Address</h5>
-                                            <p style="font-size: 0.9rem; color: var(--text-primary); margin: 0; line-height: 1.5;" id="order-addr-{{ $item->id }}">-</p>
-                                        </div>
-                                        <div>
-                                            <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-top: 0; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Payment Details</h5>
-                                            <p style="font-size: 0.9rem; color: var(--text-primary); margin: 0; line-height: 1.5;">Method: Cash on Delivery (COD)</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Dynamic Stepper tracker -->
-                                    @php
-                                        $isRetFlow = in_array($item->status, ['Returned', 'Refunded']);
-                                        $orderSteps = [
-                                            ['name' => 'Confirmed', 'icon' => '1', 'active' => true],
-                                            ['name' => 'Packed', 'icon' => '2', 'active' => in_array($item->status, ['Packed', 'Shipped', 'Delivered', 'Returned', 'Refunded'])],
-                                            ['name' => 'Shipped', 'icon' => '🚚', 'active' => in_array($item->status, ['Shipped', 'Delivered', 'Returned', 'Refunded'])],
-                                            ['name' => 'Delivered', 'icon' => '🏠', 'active' => in_array($item->status, ['Delivered', 'Returned', 'Refunded'])],
-                                        ];
-                                        if ($isRetFlow) {
-                                            $orderSteps[] = ['name' => 'Returned', 'icon' => '↩', 'active' => in_array($item->status, ['Returned', 'Refunded'])];
-                                            $orderSteps[] = ['name' => 'Refunded', 'icon' => '💰', 'active' => ($item->status === 'Refunded')];
-                                        }
-
-                                        $oActiveIndex = 0;
-                                        foreach($orderSteps as $oIdx => $oSt) {
-                                            if($oSt['active']) {
-                                                $oActiveIndex = $oIdx;
-                                            }
-                                        }
-                                        $oTotalSteps = count($orderSteps);
-                                        $oPercent = ($oActiveIndex / ($oTotalSteps - 1)) * 80;
-                                    @endphp
-
-                                    <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-top: 0; margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Consignment Journey</h5>
-                                    <div style="display: flex; justify-content: space-between; position: relative; margin: 1.5rem 0 2rem 0; padding: 0 1rem;">
-                                        <div style="position: absolute; top: 14px; left: 10%; right: 10%; height: 4px; background: var(--border-color); z-index: 1;"></div>
-                                        <div style="position: absolute; top: 14px; left: 10%; width: {{ $oPercent }}%; height: 4px; background: var(--primary); z-index: 2; transition: width 0.4s ease;"></div>
-
-                                        @foreach($orderSteps as $oIdx => $oStep)
-                                            @php
-                                                $oDone = $oIdx <= $oActiveIndex;
-                                                $oIcon = $oDone ? '✓' : $oStep['icon'];
-                                                $oBg = $oDone ? 'var(--primary)' : 'var(--light-grey)';
-                                                $oColor = $oDone ? 'white' : 'var(--text-secondary)';
-                                                $oBorder = $oDone ? 'none' : '1px solid var(--border-color)';
-                                                $oFontW = $oDone ? '700' : '500';
-                                                $oTextC = $oDone ? 'var(--text-primary)' : 'var(--text-secondary)';
-                                            @endphp
-                                            <div style="display: flex; flex-direction: column; align-items: center; z-index: 5; background: var(--white); padding: 0 5px;">
-                                                <div style="width: 28px; height: 28px; border-radius: 50%; background: {{ $oBg }}; color: {{ $oColor }}; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; border: {{ $oBorder }}; font-weight: 700;">
-                                                    {{ $oIcon }}
-                                                </div>
-                                                <span style="font-size: 0.75rem; font-weight: {{ $oFontW }}; margin-top: 0.5rem; color: {{ $oTextC }};">{{ $oStep['name'] }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-
-                                    <!-- Action Buttons -->
-                                    <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-                                        @if($item->status === 'Delivered')
-                                            <button onclick="returnOrder({{ $item->id }})" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #EF4444; color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; width: fit-content;">Return Item</button>
-                                        @endif
-                                        <a href="{{ route('track.order') }}?id={{ $item->order_number }}" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.85rem; width: fit-content; text-decoration: none;">Track package</a>
+                                        <span style="color: var(--primary); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.25rem;">Details →</span>
                                     </div>
                                 </div>
                             </div>
@@ -326,25 +236,49 @@
     switchDashTab(tabParam);
 
     function loadAddress() {
-        const address = JSON.parse(localStorage.getItem('default_shipping_address'));
-        if (address) {
-            document.getElementById('addr-fullname').value = address.fullname || '';
-            document.getElementById('addr-line1').value = address.line1 || '';
-            document.getElementById('addr-city').value = address.city || '';
-            document.getElementById('addr-pincode').value = address.pincode || '';
+        const dbAddr = {
+            fullname: "{{ auth()->user()->fullname ?? '' }}",
+            line1: "{{ auth()->user()->address ?? '' }}",
+            city: "{{ auth()->user()->city ?? '' }}",
+            pincode: "{{ auth()->user()->pincode ?? '' }}"
+        };
+        if (dbAddr.fullname || dbAddr.line1) {
+            document.getElementById('addr-fullname').value = dbAddr.fullname;
+            document.getElementById('addr-line1').value = dbAddr.line1;
+            document.getElementById('addr-city').value = dbAddr.city;
+            document.getElementById('addr-pincode').value = dbAddr.pincode;
         }
     }
 
-    function saveAddress(e) {
+    async function saveAddress(e) {
         e.preventDefault();
-        const address = {
-            fullname: document.getElementById('addr-fullname').value.trim(),
-            line1: document.getElementById('addr-line1').value.trim(),
-            city: document.getElementById('addr-city').value.trim(),
-            pincode: document.getElementById('addr-pincode').value.trim()
-        };
-        localStorage.setItem('default_shipping_address', JSON.stringify(address));
-        window.showToast("Default shipping address saved successfully!", "success");
+        const formData = new FormData();
+        formData.append('fullname', document.getElementById('addr-fullname').value.trim());
+        formData.append('address', document.getElementById('addr-line1').value.trim());
+        formData.append('city', document.getElementById('addr-city').value.trim());
+        formData.append('pincode', document.getElementById('addr-pincode').value.trim());
+        formData.append('_token', '{{ csrf_token() }}');
+
+        try {
+            const response = await fetch('/api/user/address', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                window.showToast(data.message, "success");
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                window.showToast(data.message || "Failed to save address.", "error");
+            }
+        } catch (error) {
+            window.showToast("An error occurred while saving the address.", "error");
+        }
     }
 
     function returnOrder(orderId) {
@@ -411,19 +345,24 @@
     function toggleOrderDetails(orderId) {
         const details = document.getElementById(`order-details-${orderId}`);
         const chevron = document.getElementById(`order-chevron-${orderId}`);
-        if (details.style.display === 'none') {
-            details.style.display = 'block';
-            chevron.style.transform = 'rotate(180deg)';
+        if (!details) return;
+        details.classList.toggle('open');
+        if (details.classList.contains('open')) {
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
         } else {
-            details.style.display = 'none';
-            chevron.style.transform = 'rotate(0deg)';
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
         }
     }
 
     function populateOrderAddresses() {
-        const address = JSON.parse(localStorage.getItem('default_shipping_address'));
-        if (address && address.fullname) {
-            const addrText = `${address.fullname}<br>${address.line1}, ${address.city} - ${address.pincode}`;
+        const dbAddr = {
+            fullname: "{{ auth()->user()->fullname ?? '' }}",
+            line1: "{{ auth()->user()->address ?? '' }}",
+            city: "{{ auth()->user()->city ?? '' }}",
+            pincode: "{{ auth()->user()->pincode ?? '' }}"
+        };
+        if (dbAddr.fullname) {
+            const addrText = `${dbAddr.fullname}<br>${dbAddr.line1}, ${dbAddr.city} - ${dbAddr.pincode}`;
             document.querySelectorAll('[id^="order-addr-"]').forEach(el => {
                 el.innerHTML = addrText;
             });
@@ -463,6 +402,12 @@
 <!-- Select2 Assets & custom styles -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+    .order-details-pane {
+        display: none;
+    }
+    .order-details-pane.open {
+        display: block !important;
+    }
     .select2-container--default .select2-selection--single {
         height: auto !important;
         padding: 0.6rem 0.75rem !important;

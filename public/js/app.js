@@ -138,8 +138,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateCartBadge();
 
+    window.productStocks = [];
+    fetch('/api/products/stock')
+        .then(res => res.json())
+        .then(data => {
+            window.productStocks = data;
+        })
+        .catch(err => console.log('Error fetching product stocks:', err));
+
     window.addToCart = function(id, name, price, img, qty = 1) {
-        const existingItem = cart.find(item => item.id === id);
+        const prod = window.productStocks.find(p => p.id === id);
+        let maxStock = prod ? prod.stock : 999;
+        
+        let colorName = null;
+        const matches = name.match(/\(([^)]+)\)/);
+        if (matches) {
+            colorName = matches[1].trim();
+        }
+        if (prod && prod.colors && prod.colors.length > 0 && colorName) {
+            const variant = prod.colors.find(c => c.name && c.name.toLowerCase() === colorName.toLowerCase());
+            if (variant) {
+                maxStock = variant.stock;
+            }
+        }
+
+        const existingItem = cart.find(item => item.id === id && item.name === name);
+        const currentQty = existingItem ? existingItem.qty : 0;
+        if (currentQty + qty > maxStock) {
+            showToast(`Cannot add more. Only ${maxStock} units left in stock!`, 'error');
+            return;
+        }
+
         if (existingItem) {
             existingItem.qty += qty;
         } else {
@@ -153,12 +182,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.renderCartPage) window.renderCartPage();
     };
 
-    window.updateQty = function(id, delta) {
-        const item = cart.find(item => item.id === id);
+    window.updateQty = function(id, delta, name = null) {
+        const item = cart.find(item => item.id === id && (!name || item.name === name));
         if (item) {
+            const prod = window.productStocks.find(p => p.id === id);
+            let maxStock = prod ? prod.stock : 999;
+            
+            let colorName = null;
+            const matches = item.name.match(/\(([^)]+)\)/);
+            if (matches) {
+                colorName = matches[1].trim();
+            }
+            if (prod && prod.colors && prod.colors.length > 0 && colorName) {
+                const variant = prod.colors.find(c => c.name && c.name.toLowerCase() === colorName.toLowerCase());
+                if (variant) {
+                    maxStock = variant.stock;
+                }
+            }
+
+            if (delta > 0 && item.qty + delta > maxStock) {
+                showToast(`Cannot add more. Only ${maxStock} units left in stock!`, 'error');
+                return;
+            }
+
             item.qty += delta;
             if (item.qty <= 0) {
-                cart = cart.filter(i => i.id !== id);
+                cart = cart.filter(i => !(i.id === id && (!name || i.name === name)));
             }
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartBadge();
@@ -167,8 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.removeFromCart = function(id) {
-        cart = cart.filter(i => i.id !== id);
+    window.removeFromCart = function(id, name = null) {
+        cart = cart.filter(i => !(i.id === id && (!name || i.name === name)));
         localStorage.setItem('cart', JSON.stringify(cart));
         updateCartBadge();
         renderCartDrawer();
@@ -196,19 +245,39 @@ document.addEventListener('DOMContentLoaded', () => {
         drawerList.innerHTML = cart.map(item => {
             const sub = item.price * item.qty;
             total += sub;
+            const safeName = item.name.replace(/'/g, "\\'");
+            
+            let colorBadge = '';
+            const matches = item.name.match(/\(([^)]+)\)/);
+            let displayName = item.name;
+            if (matches) {
+                const colorVal = matches[1].trim();
+                const prod = window.productStocks.find(p => p.id === item.id);
+                let hexColor = '#ccc';
+                if (prod && prod.colors) {
+                    const foundColor = prod.colors.find(c => c.name && c.name.toLowerCase() === colorVal.toLowerCase());
+                    if (foundColor) {
+                        hexColor = foundColor.code;
+                    }
+                }
+                displayName = item.name.replace(/\([^)]+\)/, '').trim();
+                colorBadge = `<div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;"><span style="width:12px; height:12px; border-radius:50%; background:${hexColor}; border:1px solid var(--border-color); display:inline-block;"></span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${colorVal}</span></div>`;
+            }
+
             return `
                 <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
                     <img src="${item.img}" style="width: 70px; height: 70px; border-radius: var(--radius-sm); object-fit: cover;">
                     <div style="flex-grow: 1;">
-                        <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem;">${item.name}</h4>
-                        <p style="color: var(--primary); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.5rem;">₹${item.price.toFixed(2)}</p>
+                        <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem;">${displayName}</h4>
+                        ${colorBadge}
+                        <p style="color: var(--primary); font-weight: 700; font-size: 0.9rem; margin-top: 0.25rem; margin-bottom: 0.5rem;">₹${item.price.toFixed(2)}</p>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <button onclick="updateQty(${item.id}, -1)" style="border: 1px solid var(--border-color); background: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; color: var(--text-primary);">-</button>
+                            <button onclick="updateQty(${item.id}, -1, '${safeName}')" style="border: 1px solid var(--border-color); background: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; color: var(--text-primary);">-</button>
                             <span style="font-size: 0.9rem; font-weight: 600;">${item.qty}</span>
-                            <button onclick="updateQty(${item.id}, 1)" style="border: 1px solid var(--border-color); background: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; color: var(--text-primary);">+</button>
+                            <button onclick="updateQty(${item.id}, 1, '${safeName}')" style="border: 1px solid var(--border-color); background: none; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; color: var(--text-primary);">+</button>
                         </div>
                     </div>
-                    <button onclick="removeFromCart(${item.id})" style="border: none; background: none; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem;">
+                    <button onclick="removeFromCart(${item.id}, '${safeName}')" style="border: none; background: none; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                 </div>

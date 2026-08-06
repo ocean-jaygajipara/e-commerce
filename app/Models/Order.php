@@ -12,6 +12,7 @@ class Order extends Model
         'total',
         'status',
         'items',
+        'promo_code',
         'return_reason',
         'return_comment',
     ];

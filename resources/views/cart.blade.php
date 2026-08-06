@@ -103,23 +103,42 @@
         cartList.innerHTML = cart.map(item => {
             const sub = item.price * item.qty;
             total += sub;
+            const safeName = item.name.replace(/'/g, "\\'");
+            let colorBadge = '';
+            const matches = item.name.match(/\(([^)]+)\)/);
+            let displayName = item.name;
+            if (matches) {
+                const colorVal = matches[1].trim();
+                const prod = window.productStocks.find(p => p.id === item.id);
+                let hexColor = '#ccc';
+                if (prod && prod.colors) {
+                    const foundColor = prod.colors.find(c => c.name && c.name.toLowerCase() === colorVal.toLowerCase());
+                    if (foundColor) {
+                        hexColor = foundColor.code;
+                    }
+                }
+                displayName = item.name.replace(/\([^)]+\)/, '').trim();
+                colorBadge = `<div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;"><span style="width:12px; height:12px; border-radius:50%; background:${hexColor}; border:1px solid var(--border-color); display:inline-block;"></span><span style="font-size:0.8rem; color:var(--text-secondary); font-weight:600;">${colorVal}</span></div>`;
+            }
+
             return `
                 <div class="glass" style="border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem;">
                     <img src="${item.img}" style="width: 90px; height: 90px; border-radius: var(--radius-sm); object-fit: cover;">
                     <div style="flex-grow: 1;">
-                        <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">${item.name}</h4>
-                        <p style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase;">Premium Luxury</p>
+                        <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">${displayName}</h4>
+                        ${colorBadge}
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; margin-top: 0.25rem;">Premium Luxury</p>
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <button onclick="updateQty(${item.id}, -1)" style="border: 1px solid var(--border-color); background: none; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-primary); font-weight: 600;">-</button>
+                        <button onclick="updateQty(${item.id}, -1, '${safeName}')" style="border: 1px solid var(--border-color); background: none; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-primary); font-weight: 600;">-</button>
                         <span style="font-size: 1rem; font-weight: 700; min-width: 20px; text-align: center;">${item.qty}</span>
-                        <button onclick="updateQty(${item.id}, 1)" style="border: 1px solid var(--border-color); background: none; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-primary); font-weight: 600;">+</button>
+                        <button onclick="updateQty(${item.id}, 1, '${safeName}')" style="border: 1px solid var(--border-color); background: none; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-primary); font-weight: 600;">+</button>
                     </div>
                     <div style="text-align: right; min-width: 120px;">
                         <span style="font-weight: 800; font-size: 1.2rem; color: var(--text-primary);">₹${sub.toFixed(2)}</span>
                         <div style="font-size: 0.85rem; color: var(--text-secondary);">₹${item.price.toFixed(2)} each</div>
                     </div>
-                    <button onclick="removeFromCart(${item.id})" style="border: none; background: none; color: #EF4444; cursor: pointer; padding: 0.5rem; transition: var(--transition);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                    <button onclick="removeFromCart(${item.id}, '${safeName}')" style="border: none; background: none; color: #EF4444; cursor: pointer; padding: 0.5rem; transition: var(--transition);" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                 </div>

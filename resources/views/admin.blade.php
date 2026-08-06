@@ -518,12 +518,13 @@
                                         <td style="font-weight: 700;">₹{{ number_format($item->total, 2) }}</td>
                                         <td style="color: var(--text-secondary);">{{ $item->created_at->format('M d, Y') }}</td>
                                         <td>
-                                            <select class="select2-status" onchange="updateOrderStatus({{ $item->id }}, this.value)" style="width: 150px; padding: 0.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: {{ in_array($item->status, ['Delivered', 'Returned']) ? 'rgba(0,0,0,0.05)' : 'var(--bg-primary)' }}; color: var(--text-primary); outline: none;" {{ in_array($item->status, ['Delivered', 'Returned']) ? 'disabled' : '' }}>
+                                            <select class="select2-status" onchange="updateOrderStatus({{ $item->id }}, this.value)" style="width: 150px; padding: 0.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: {{ in_array($item->status, ['Delivered', 'Refunded']) ? 'rgba(0,0,0,0.05)' : 'var(--bg-primary)' }}; color: var(--text-primary); outline: none;" {{ in_array($item->status, ['Delivered', 'Refunded']) ? 'disabled' : '' }}>
                                                 <option value="Confirmed" {{ $item->status == 'Confirmed' ? 'selected' : '' }}>Confirmed</option>
                                                 <option value="Packed" {{ $item->status == 'Packed' ? 'selected' : '' }}>Packed</option>
                                                 <option value="Shipped" {{ $item->status == 'Shipped' ? 'selected' : '' }}>Shipped</option>
                                                 <option value="Delivered" {{ $item->status == 'Delivered' ? 'selected' : '' }}>Delivered</option>
                                                 <option value="Returned" {{ $item->status == 'Returned' ? 'selected' : '' }}>Returned</option>
+                                                <option value="Refunded" {{ $item->status == 'Refunded' ? 'selected' : '' }}>Refunded</option>
                                             </select>
                                         </td>
                                     </tr>
@@ -538,9 +539,10 @@
             <div id="panel-categories" class="admin-panel">
                 <!-- Add Category Card -->
                 <div class="admin-table-card" style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem;">Create New Category</h3>
-                    <form action="{{ route('admin.category.add') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <h3 id="category-form-title" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem;">Create New Category</h3>
+                    <form id="category-form" action="{{ route('admin.category.add') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                         @csrf
+                        <input type="hidden" name="id" id="edit-category-id">
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Category Name</label>
                             <input type="text" name="name" required placeholder="e.g. Smart Tech Accessories" style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;">
@@ -553,8 +555,9 @@
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Description</label>
                             <textarea name="description" placeholder="Specify short collection description..." style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; height: 80px; box-sizing:border-box;"></textarea>
                         </div>
-                        <div style="grid-column: span 2;">
-                            <button type="submit" class="btn btn-primary" style="padding:0.75rem 1.5rem;">Add Category</button>
+                        <div style="grid-column: span 2; display: flex; gap: 1rem;">
+                            <button type="submit" id="category-submit-btn" class="btn btn-primary" style="padding:0.75rem 1.5rem;">Add Category</button>
+                            <button type="button" id="category-cancel-btn" class="btn btn-outline" style="padding:0.75rem 1.5rem; display:none;" onclick="cancelCategoryEdit()">Cancel Edit</button>
                         </div>
                     </form>
                 </div>
@@ -580,11 +583,14 @@
                                     <td style="color: var(--text-secondary);">{{ $cat->slug }}</td>
                                     <td style="color: var(--text-secondary);">{{ $cat->description }}</td>
                                     <td style="text-align: right;">
-                                        <form action="{{ route('admin.category.delete', $cat->id) }}" method="POST" onsubmit="return confirm('Deleting category will also delete its products. Proceed?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" style="background: none; border: none; color: #EF4444; cursor: pointer; font-weight: 600;">Delete</button>
-                                        </form>
+                                        <div style="display: inline-flex; justify-content: flex-end; gap: 1rem; align-items: center;">
+                                            <button type="button" onclick="editCategory({{ json_encode($cat) }})" style="background: none; border: none; color: var(--primary); cursor: pointer; font-weight: 600;">Edit</button>
+                                            <form action="{{ route('admin.category.delete', $cat->id) }}" method="POST" onsubmit="return confirm('Deleting category will also delete its products. Proceed?')" style="margin: 0; display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" style="background: none; border: none; color: #EF4444; cursor: pointer; font-weight: 600;">Delete</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -624,11 +630,18 @@
                         </div>
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Image URL</label>
-                            <input type="url" name="img" required placeholder="e.g. https://images.unsplash.com/..." style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;">
+                            <input type="url" id="product-img-input" name="img" required placeholder="e.g. https://images.unsplash.com/..." style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;" oninput="updateAdminImagePreview(this.value)">
+                            <div id="admin-image-preview-container" style="margin-top: 0.75rem; display: none; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); width: 100px; height: 100px; background: rgba(0,0,0,0.02);">
+                                <img id="admin-image-preview" src="" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
                         </div>
                         <div>
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Stock Quantity</label>
                             <input type="number" name="stock" required placeholder="e.g. 20" style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;">
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Colors (Format: Name:Hex:Stock, e.g. Black:#000:5, Silver:#ccc:10)</label>
+                            <input type="text" name="colors" placeholder="e.g. Black:#1C1917:5, Silver:#E5E7EB:10" style="width:100%; padding:0.75rem; border-radius:var(--radius-sm); border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-primary); outline:none; box-sizing:border-box;">
                         </div>
                         <div style="grid-column: span 2;">
                             <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.5rem; color:var(--text-secondary);">Product Description</label>
@@ -779,12 +792,24 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert(data.message);
+                    window.showToast(data.message, 'success');
                 } else {
-                    alert(data.message || 'Failed to update order status.');
+                    window.showToast(data.message || 'Failed to update order status.', 'error');
                 }
             } catch (error) {
-                alert('An error occurred while updating order status.');
+                window.showToast('An error occurred while updating order status.', 'error');
+            }
+        }
+
+        window.updateAdminImagePreview = function(url) {
+            const previewContainer = document.getElementById('admin-image-preview-container');
+            const previewImg = document.getElementById('admin-image-preview');
+            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))) {
+                previewImg.src = url;
+                previewContainer.style.display = 'block';
+            } else {
+                previewImg.src = '';
+                previewContainer.style.display = 'none';
             }
         }
 
@@ -801,8 +826,12 @@
             document.querySelector('#product-form input[name="price"]').value = product.price;
             document.querySelector('#product-form input[name="img"]').value = product.img;
             document.querySelector('#product-form input[name="stock"]').value = product.stock;
+            document.querySelector('#product-form input[name="colors"]').value = product.colors ? product.colors.map(c => typeof c === 'object' ? (c.name + ':' + c.code + ':' + c.stock) : c).join(', ') : '';
             document.querySelector('#product-form textarea[name="description"]').value = product.description;
             
+            // Update preview
+            window.updateAdminImagePreview(product.img);
+
             // Change buttons
             document.getElementById('product-submit-btn').innerText = 'Save Changes';
             document.getElementById('product-cancel-btn').style.display = 'inline-block';
@@ -819,9 +848,39 @@
             // Reset Select2
             $('.select2-category').val('').trigger('change');
             
+            // Clear preview
+            window.updateAdminImagePreview('');
+
             // Change buttons back
             document.getElementById('product-submit-btn').innerText = 'Add Product';
             document.getElementById('product-cancel-btn').style.display = 'none';
+        }
+
+        window.editCategory = function(category) {
+            document.getElementById('edit-category-id').value = category.id;
+            document.getElementById('category-form-title').innerText = 'Edit Category: ' + category.name;
+            
+            // Populate inputs
+            document.querySelector('#category-form input[name="name"]').value = category.name;
+            document.querySelector('#category-form input[name="icon"]').value = category.icon;
+            document.querySelector('#category-form textarea[name="description"]').value = category.description || '';
+            
+            // Change buttons
+            document.getElementById('category-submit-btn').innerText = 'Save Changes';
+            document.getElementById('category-cancel-btn').style.display = 'inline-block';
+            
+            // Scroll to form
+            document.getElementById('category-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        window.cancelCategoryEdit = function() {
+            document.getElementById('edit-category-id').value = '';
+            document.getElementById('category-form-title').innerText = 'Create New Category';
+            document.getElementById('category-form').reset();
+            
+            // Change buttons back
+            document.getElementById('category-submit-btn').innerText = 'Add Category';
+            document.getElementById('category-cancel-btn').style.display = 'none';
         }
 
         // Dark/Light Theme Control

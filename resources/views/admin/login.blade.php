@@ -236,6 +236,7 @@
             </div>
 
             <button type="submit" class="btn-submit">Log In</button>
+            <button type="button" onclick="autofillAdmin()" style="width: 100%; padding: 0.85rem; border-radius: var(--radius-sm); background: rgba(255, 107, 0, 0.08); color: var(--primary); border: 1px dashed var(--primary); font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; margin-top: 1rem; text-transform: uppercase; letter-spacing: 1px; box-sizing: border-box; opacity: 0; animation: formElementsFade 0.6s ease-out 0.6s forwards;">Autofill Credentials</button>
         </form>
 
         <a href="{{ route('home') }}" style="display: inline-block; margin-top: 2rem; color: #9CA3AF; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: var(--transition); opacity: 0; animation: formElementsFade 0.6s ease-out 0.8s forwards;" onmouseover="this.style.color='var(--primary)';" onmouseout="this.style.color='#9CA3AF';">
@@ -246,6 +247,14 @@
     <!-- Core interactive Script & Toaster triggers -->
     <script src="{{ asset('js/app.js') }}"></script>
     <script>
+        function autofillAdmin() {
+            document.getElementById('username').value = 'admin';
+            document.getElementById('password').value = 'admin';
+            if (window.showToast) {
+                window.showToast("Admin credentials autofilled!", "success");
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             @if($errors->has('login_error'))
                 window.showToast("{{ $errors->first('login_error') }}", 'error');

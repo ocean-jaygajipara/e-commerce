@@ -17,7 +17,62 @@ class OrderController extends Controller
         $request->validate([
             'total' => ['required', 'numeric'],
             'items' => ['required', 'array'],
+            'promo_code' => ['nullable', 'string', 'max:50'],
+            'fullname' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'pincode' => ['nullable', 'string', 'max:10'],
         ]);
+
+        $user = Auth::user();
+        if ($user) {
+            $user->update([
+                'fullname' => $request->fullname,
+                'address' => $request->address,
+                'city' => $request->city,
+                'pincode' => $request->pincode,
+            ]);
+        }
+
+        // First check: Verify stock for all items before placing the order
+        foreach ($request->items as $item) {
+            if (isset($item['id'])) {
+                $product = \App\Models\Product::find($item['id']);
+                if (!$product) {
+                    return response()->json(['success' => false, 'message' => 'Product not found.'], 400);
+                }
+
+                $qty = intval($item['qty'] ?? 1);
+                $itemName = $item['name'] ?? '';
+                $colorName = null;
+                if (preg_match('/\(([^)]+)\)/', $itemName, $matches)) {
+                    $colorName = trim($matches[1]);
+                }
+
+                if ($product->colors && is_array($product->colors) && count($product->colors) > 0 && $colorName) {
+                    $foundVariant = false;
+                    foreach ($product->colors as $variant) {
+                        if (is_array($variant) && isset($variant['name']) && strtolower($variant['name']) === strtolower($colorName)) {
+                            $foundVariant = true;
+                            if (intval($variant['stock'] ?? 0) < $qty) {
+                                return response()->json([
+                                    'success' => false,
+                                    'message' => "Only " . ($variant['stock'] ?? 0) . " units left for color variant '{$colorName}' of product '{$product->name}'."
+                                ], 400);
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    if ($product->stock < $qty) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Only {$product->stock} units left for product '{$product->name}'."
+                        ], 400);
+                    }
+                }
+            }
+        }
 
         $orderNumber = 'VLX-2026-' . rand(10000, 99999);
 
@@ -26,7 +81,8 @@ class OrderController extends Controller
             'order_number' => $orderNumber,
             'total' => $request->total,
             'items' => $request->items,
-            'status' => 'Confirmed' // Default status
+            'promo_code' => $request->promo_code,
+            'status' => 'Confirmed'
         ]);
 
         // Reduce product stock based on ordered items
@@ -34,8 +90,26 @@ class OrderController extends Controller
             if (isset($item['id'])) {
                 $product = \App\Models\Product::find($item['id']);
                 if ($product) {
-                    // Decrement stock by quantity purchased
-                    $product->decrement('stock', intval($item['qty'] ?? 1));
+                    $qty = intval($item['qty'] ?? 1);
+                    $itemName = $item['name'] ?? '';
+                    $colorName = null;
+                    if (preg_match('/\(([^)]+)\)/', $itemName, $matches)) {
+                        $colorName = trim($matches[1]);
+                    }
+
+                    if ($product->colors && is_array($product->colors) && count($product->colors) > 0 && $colorName) {
+                        $updatedColors = [];
+                        foreach ($product->colors as $variant) {
+                            if (is_array($variant) && isset($variant['name']) && strtolower($variant['name']) === strtolower($colorName)) {
+                                $variant['stock'] = max(0, intval($variant['stock'] ?? 0) - $qty);
+                            }
+                            $updatedColors[] = $variant;
+                        }
+                        $product->colors = $updatedColors;
+                    }
+                    
+                    $product->stock = max(0, $product->stock - $qty);
+                    $product->save();
                 }
             }
         }
@@ -72,10 +146,18 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
+                'id' => $order->id,
                 'status' => $order->status,
                 'order_number' => $order->order_number,
                 'total' => $order->total,
-                'date' => $order->created_at->format('M d, Y')
+                'items' => $order->items,
+                'date' => $order->created_at->format('M d, Y'),
+                'shipping_address' => [
+                    'fullname' => $order->user->fullname ?? $order->user->name,
+                    'address' => $order->user->address ?? '',
+                    'city' => $order->user->city ?? '',
+                    'pincode' => $order->user->pincode ?? ''
+                ]
             ]);
         }
 

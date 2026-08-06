@@ -33,28 +33,19 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:6'],
         ]);
 
-        // Generate a 4-digit verification OTP
-        $otp = rand(1000, 9999);
-
-        // Store OTP and pending registration data in session
-        session([
-            'register_otp' => $otp,
-            'register_user' => [
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-            ]
+        // Create user directly
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
         ]);
 
-        // Send OTP email (written to storage/logs/laravel.log)
-        Mail::raw("Your Ocean Ecom VIP registration verification code is: {$otp}\n\nPlease enter this code on the verification page to complete your registration.", function ($message) use ($request) {
-            $message->to($request->email)
-                ->subject('Ocean Ecom VIP Verification Code');
-        });
+        // Log the user in
+        Auth::login($user);
 
         return response()->json([
             'success' => true, 
-            'message' => 'Verification code sent to your email! (Please inspect storage/logs/laravel.log to find your OTP code).'
+            'message' => 'Account created and logged in successfully!'
         ]);
     }
 
@@ -97,6 +88,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('auth');
+        return redirect()->route('login');
     }
 }

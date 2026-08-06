@@ -70,17 +70,17 @@
                 <!-- Live suggestions dropdown -->
                 <div class="search-suggestions glass">
                     <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.5rem;">Suggested Products</div>
-                    <a href="{{ route('product.details', 1) }}" class="suggestion-item">
+                    <a href="{{ route('product.details', 'sonicwave-anc-headphones') }}" class="suggestion-item">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-5.05-1.44a2 2 0 0 0-2.42 1.44l-.74 2.58a16 16 0 0 1-6.56-6.56l2.58-.74a2 2 0 0 0 1.44-2.42L5.28 3.02"/></svg>
-                        <span>AeroBuds Pro - Wireless ANC Earbuds</span>
+                        <span>SonicWave ANC Headphones</span>
                     </a>
-                    <a href="{{ route('product.details', 2) }}" class="suggestion-item">
+                    <a href="{{ route('product.details', 'chrono-legacy-automatic-watch') }}" class="suggestion-item">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
-                        <span>Titan Smartwatch v3 - Matte Black</span>
+                        <span>Chrono Legacy Automatic Watch</span>
                     </a>
-                    <a href="{{ route('product.details', 3) }}" class="suggestion-item">
+                    <a href="{{ route('product.details', 'nomad-waterproof-backpack') }}" class="suggestion-item">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                        <span>Classic Leather Duffle Bag</span>
+                        <span>Nomad Waterproof Backpack</span>
                     </a>
                 </div>
             </div>

@@ -71,15 +71,15 @@ class AdminController extends Controller implements HasMiddleware
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => ['required', 'string', 'in:Confirmed,Packed,Shipped,Delivered,Returned'],
+            'status' => ['required', 'string', 'in:Confirmed,Packed,Shipped,Delivered,Returned,Refunded'],
         ]);
 
         $order = Order::findOrFail($id);
 
-        if ($order->status === 'Delivered') {
+        if (in_array($order->status, ['Delivered', 'Refunded'])) {
             return response()->json([
                 'success' => false,
-                'message' => "This order has already been Delivered. Status cannot be modified anymore."
+                'message' => "This order has already been {$order->status}. Status cannot be modified anymore."
             ], 422);
         }
 
@@ -95,10 +95,22 @@ class AdminController extends Controller implements HasMiddleware
     public function addCategory(Request $request)
     {
         $request->validate([
+            'id' => ['nullable', 'integer', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:255'],
             'icon' => ['required', 'string', 'max:10'],
             'description' => ['nullable', 'string'],
         ]);
+
+        if ($request->id) {
+            $category = Category::findOrFail($request->id);
+            $category->update([
+                'name' => $request->name,
+                'slug' => Str::slug($request->name),
+                'icon' => $request->icon,
+                'description' => $request->description,
+            ]);
+            return redirect()->back()->with('success', 'Category updated successfully!');
+        }
 
         Category::create([
             'name' => $request->name,
@@ -128,19 +140,65 @@ class AdminController extends Controller implements HasMiddleware
             'price' => ['required', 'numeric', 'min:0'],
             'description' => ['required', 'string'],
             'img' => ['required', 'url'],
+            'colors' => ['nullable', 'string'],
             'stock' => ['required', 'integer', 'min:0'],
         ]);
+
+        $colorsArray = null;
+        $totalStock = intval($request->stock);
+
+        if ($request->colors) {
+            $colorsArray = [];
+            $parts = array_map('trim', explode(',', $request->colors));
+            $sumStock = 0;
+            $hasVariantStock = false;
+            foreach ($parts as $part) {
+                if (empty($part)) continue;
+                $subParts = explode(':', $part);
+                if (count($subParts) >= 3) {
+                    $name = trim($subParts[0]);
+                    $code = trim($subParts[1]);
+                    $vStock = intval($subParts[2]);
+                    $colorsArray[] = [
+                        'name' => $name,
+                        'code' => $code,
+                        'stock' => $vStock
+                    ];
+                    $sumStock += $vStock;
+                    $hasVariantStock = true;
+                } else if (count($subParts) == 2) {
+                    $name = trim($subParts[0]);
+                    $code = trim($subParts[1]);
+                    $colorsArray[] = [
+                        'name' => $name,
+                        'code' => $code,
+                        'stock' => $totalStock
+                    ];
+                } else {
+                    $colorsArray[] = [
+                        'name' => $part,
+                        'code' => $part,
+                        'stock' => $totalStock
+                    ];
+                }
+            }
+            if ($hasVariantStock) {
+                $totalStock = $sumStock;
+            }
+        }
 
         if ($request->id) {
             $product = Product::findOrFail($request->id);
             $product->update([
                 'category_id' => $request->category_id,
                 'name' => $request->name,
+                'slug' => Str::slug($request->name),
                 'brand' => $request->brand,
                 'price' => $request->price,
                 'description' => $request->description,
                 'img' => $request->img,
-                'stock' => $request->stock,
+                'colors' => $colorsArray,
+                'stock' => $totalStock,
             ]);
             return redirect()->route('admin.products')->with('success', 'Product updated successfully!');
         }
@@ -148,11 +206,13 @@ class AdminController extends Controller implements HasMiddleware
         Product::create([
             'category_id' => $request->category_id,
             'name' => $request->name,
+            'slug' => Str::slug($request->name),
             'brand' => $request->brand,
             'price' => $request->price,
             'description' => $request->description,
             'img' => $request->img,
-            'stock' => $request->stock,
+            'colors' => $colorsArray,
+            'stock' => $totalStock,
         ]);
 
         return redirect()->back()->with('success', 'Product added successfully!');

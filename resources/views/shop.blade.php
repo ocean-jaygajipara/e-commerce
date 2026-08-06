@@ -48,11 +48,11 @@
             <!-- Price Filter Slider -->
             <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
                 <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">Price Range</h4>
-                <input id="price-slider" type="range" min="10" max="1000" value="1000" style="width: 100%; accent-color: var(--primary); cursor: pointer;" oninput="document.getElementById('price-val').innerText = '₹' + this.value">
+                <input id="price-slider" type="range" min="100" max="100000" value="100000" style="width: 100%; accent-color: var(--primary); cursor: pointer;" oninput="document.getElementById('price-val').innerText = '₹' + this.value">
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 0.75rem;">
-                    <span>Min: ₹10</span>
-                    <span id="price-val" style="font-weight: 700; color: var(--text-primary);">₹1000</span>
-                    <span>Max: ₹1000</span>
+                    <span>Min: ₹100</span>
+                    <span id="price-val" style="font-weight: 700; color: var(--text-primary);">₹100000</span>
+                    <span>Max: ₹1,00,000</span>
                 </div>
                 <button type="button" onclick="applyPriceFilter()" class="btn btn-primary" style="width: 100%; padding: 0.5rem 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer;">Apply Filter</button>
             </div>
@@ -142,13 +142,13 @@
                         <button class="product-wishlist-btn" onclick="toggleWishlist({{ $item->id }}, '{{ addslashes($item->name) }}', {{ $item->price }}, '{{ $item->img }}')">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                         </button>
-                        <a href="{{ route('product.details', $item->id) }}">
+                        <a href="{{ route('product.details', $item->slug) }}">
                             <img src="{{ $item->img }}" alt="{{ $item->name }}">
                         </a>
                     </div>
                     <div class="product-info">
                         <span class="product-brand">{{ $item->brand }}</span>
-                        <a href="{{ route('product.details', $item->id) }}" class="product-title">{{ $item->name }}</a>
+                        <a href="{{ route('product.details', $item->slug) }}" class="product-title">{{ $item->name }}</a>
                         <div class="product-rating">
                             ★★★★★ <span>({{ $item->reviews_count }})</span>
                         </div>
@@ -198,16 +198,16 @@
 
         const slider = document.getElementById('price-slider');
         if (slider) {
-            slider.value = 1000;
-            document.getElementById('price-val').innerText = '₹1000';
+            slider.value = 100000;
+            document.getElementById('price-val').innerText = '₹100000';
         }
         applyPriceFilter();
     }
 
     // Dynamic Pagination State & Logic
     let currentPage = 1;
-    const itemsPerPage = 6;
-    let currentMaxPrice = 1000;
+    const itemsPerPage = 100;
+    let currentMaxPrice = 100000;
 
     function filterAndPaginate() {
         const cards = document.querySelectorAll('#shop-product-grid .product-card');
